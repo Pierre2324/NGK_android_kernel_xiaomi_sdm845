@@ -128,4 +128,4 @@ ENTRY(memcmp)
 	b.eq	.Lbyte_loop
 	sub	result, data1w, data2w
 	ret
-ENDPIPROC(memcmp)
+END(memcmp)
