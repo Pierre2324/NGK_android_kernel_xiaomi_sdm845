@@ -696,6 +696,9 @@ alloc_new:
 			goto skip;
 		}
 		io->bio = __bio_alloc(fio, BIO_MAX_PAGES);
+		if (bio_encrypted)
+			fscrypt_set_ice_dun(inode, io->bio, dun);
+		fscrypt_set_ice_skip(io->bio, bi_crypt_skip);
 		io->fio = *fio;
 	}
 
@@ -1706,6 +1709,8 @@ static int f2fs_read_single_page(struct inode *inode, struct page *page,
 	bool bio_encrypted;
 	u64 dun;
 	int ret = 0;
+	bool bio_encrypted;
+	u64 dun;
 
 	block_in_file = (sector_t)page_index(page);
 	last_block = block_in_file + nr_pages;
