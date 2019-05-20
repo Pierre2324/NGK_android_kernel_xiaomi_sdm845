@@ -327,6 +327,15 @@ config MMU_NOTIFIER
 	bool
 	select SRCU
 
+config READAHEAD
+	bool "Enable page cache readahead"
+	default y
+	help
+	  Enable pages to be read ahead of time on an I/O request. The block
+	  parameter is named read_ahead_kb. By default, the kernel reads
+	  512 KiB ahead. Readahead is highly recommended on most systems,
+	  especially those with rotational disk storage.
+
 config KSM
 	bool "Enable KSM for page merging"
 	depends on MMU
