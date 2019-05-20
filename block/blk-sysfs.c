@@ -73,6 +73,7 @@ queue_requests_store(struct request_queue *q, const char *page, size_t count)
 	return ret;
 }
 
+#ifdef CONFIG_READAHEAD
 static ssize_t queue_ra_show(struct request_queue *q, char *page)
 {
 	unsigned long ra_kb = q->backing_dev_info->ra_pages <<
@@ -94,6 +95,7 @@ queue_ra_store(struct request_queue *q, const char *page, size_t count)
 
 	return ret;
 }
+#endif
 
 static ssize_t queue_max_sectors_show(struct request_queue *q, char *page)
 {
@@ -391,11 +393,13 @@ static struct queue_sysfs_entry queue_requests_entry = {
 	.store = queue_requests_store,
 };
 
+#ifdef CONFIG_READAHEAD
 static struct queue_sysfs_entry queue_ra_entry = {
 	.attr = {.name = "read_ahead_kb", .mode = S_IRUGO | S_IWUSR },
 	.show = queue_ra_show,
 	.store = queue_ra_store,
 };
+#endif
 
 static struct queue_sysfs_entry queue_max_sectors_entry = {
 	.attr = {.name = "max_sectors_kb", .mode = S_IRUGO | S_IWUSR },
@@ -529,7 +533,9 @@ static struct queue_sysfs_entry queue_dax_entry = {
 
 static struct attribute *default_attrs[] = {
 	&queue_requests_entry.attr,
+#ifdef CONFIG_READAHEAD
 	&queue_ra_entry.attr,
+#endif
 	&queue_max_hw_sectors_entry.attr,
 	&queue_max_sectors_entry.attr,
 	&queue_max_segments_entry.attr,
