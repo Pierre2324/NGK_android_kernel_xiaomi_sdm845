@@ -2586,10 +2586,6 @@ static int exfat_writepages(struct address_space *mapping,
 
 	ASSERT(mapping->a_ops == &exfat_aops);
 
-#ifdef CONFIG_EXFAT_ALIGNED_MPAGE_WRITE
-	if (EXFAT_SB(mapping->host->i_sb)->options.adj_req)
-		return exfat_mpage_writepages(mapping, wbc, exfat_get_block);
-#endif
 	return mpage_writepages(mapping, wbc, exfat_get_block);
 }
 
@@ -3120,8 +3116,6 @@ static int __exfat_show_options(struct seq_file *m, struct super_block *sb)
 	seq_printf(m, ",namecase=%u", opts->casesensitive);
 	if (opts->tz_utc)
 		seq_puts(m, ",tz=UTC");
-	if (opts->adj_req)
-		seq_puts(m, ",adj_req");
 	seq_printf(m, ",symlink=%u", opts->symlink);
 	seq_printf(m, ",bps=%ld", sb->s_blocksize);
 	if (opts->errors == EXFAT_ERRORS_CONT)
@@ -3299,7 +3293,6 @@ enum {
 	Opt_err_ro,
 	Opt_err,
 	Opt_discard,
-	Opt_adj_req,
 #ifdef CONFIG_EXFAT_USE_FOR_VFAT
 	Opt_shortname_lower,
 	Opt_shortname_win95,
@@ -3327,7 +3320,6 @@ static const match_table_t exfat_tokens = {
 	{Opt_err_panic, "errors=panic"},
 	{Opt_err_ro, "errors=remount-ro"},
 	{Opt_discard, "discard"},
-	{Opt_adj_req, "adj_req"},
 #ifdef CONFIG_EXFAT_USE_FOR_VFAT
 	{Opt_shortname_lower, "shortname=lower"},
 	{Opt_shortname_win95, "shortname=win95"},
@@ -3436,13 +3428,6 @@ static int parse_options(struct super_block *sb, char *options, int silent,
 			break;
 		case Opt_discard:
 			opts->discard = 1;
-			break;
-		case Opt_adj_req:
-#ifdef CONFIG_EXFAT_ALIGNED_MPAGE_WRITE
-			opts->adj_req = 1;
-#else
-			IMSG("adjust request config is not enabled. ignore\n");
-#endif
 			break;
 #ifdef CONFIG_EXFAT_USE_FOR_VFAT
 		case Opt_shortname_lower:
