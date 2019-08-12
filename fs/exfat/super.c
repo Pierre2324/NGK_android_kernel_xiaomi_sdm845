@@ -2321,22 +2321,6 @@ static void __exfat_writepage_end_io(struct bio *bio, int err)
 	atomic_dec(&EXFAT_SB(sb)->stat_n_pages_queued);
 }
 
-
-static int __support_write_inode_sync(struct super_block *sb)
-{
-#ifdef CONFIG_EXFAT_SUPPORT_DIR_SYNC
-#ifdef CONFIG_EXFAT_DELAYED_META_DIRTY
-	struct exfat_sb_info *sbi = EXFAT_SB(sb);
-
-	if (sbi->fsi.vol_type != EXFAT)
-		return 0;
-#endif
-	return 1;
-#endif
-	return 0;
-}
-
-
 static int __exfat_file_fsync(struct file *filp, loff_t start, loff_t end, int datasync)
 {
 	struct inode *inode = filp->f_mapping->host;
@@ -2344,9 +2328,6 @@ static int __exfat_file_fsync(struct file *filp, loff_t start, loff_t end, int d
 	int res, err = 0;
 
 	res = __exfat_generic_file_fsync(filp, start, end, datasync);
-
-	if (!__support_write_inode_sync(sb))
-		err = fsapi_sync_fs(sb, 1);
 
 	return res ? res : err;
 }
@@ -4025,9 +4006,6 @@ static int __exfat_write_inode(struct inode *inode, int sync)
 	exfat_time_unix2fat(sbi, &inode->i_ctime, &info.CreateTimestamp);
 	exfat_time_unix2fat(sbi, &inode->i_atime, &info.AccessTimestamp);
 
-	if (!__support_write_inode_sync(sb))
-		sync = 0;
-
 	/* FIXME : Do we need handling error? */
 	return fsapi_write_inode(inode, &info, sync);
 }
@@ -4118,11 +4096,10 @@ static void exfat_put_super(struct super_block *sb)
 
 static inline void __flush_delayed_meta(struct super_block *sb, s32 sync)
 {
-#ifdef CONFIG_EXFAT_DELAYED_META_DIRTY
-	fsapi_cache_flush(sb, sync);
-#else
-	/* DO NOTHING */
-#endif
+	struct exfat_sb_info *sbi = EXFAT_SB(sb);
+
+	if (sbi->options.delayed_meta)
+		fsapi_cache_flush(sb, sync);
 }
 
 static void exfat_write_super(struct super_block *sb)
@@ -4348,6 +4325,8 @@ static int __exfat_show_options(struct seq_file *m, struct super_block *sb)
 		seq_puts(m, ",errors=remount-ro");
 	if (opts->discard)
 		seq_puts(m, ",discard");
+	if (opts->delayed_meta)
+		seq_puts(m, ",delayed_meta");
 
 	return 0;
 }
@@ -4538,6 +4517,8 @@ enum {
 	Opt_shortname_winnt,
 	Opt_shortname_mixed,
 #endif /* CONFIG_EXFAT_USE_FOR_VFAT */
+	Opt_delayed_meta,
+	Opt_nodelayed_meta,
 };
 
 static const match_table_t exfat_tokens = {
@@ -4572,6 +4553,8 @@ static const match_table_t exfat_tokens = {
 	{Opt_shortname_winnt, "shortname=winnt"},
 	{Opt_shortname_mixed, "shortname=mixed"},
 #endif /* CONFIG_EXFAT_USE_FOR_VFAT */
+	{Opt_delayed_meta, "delayed_meta"},
+	{Opt_nodelayed_meta, "nodelayed_meta"},
 	{Opt_err, NULL}
 };
 
@@ -4600,6 +4583,7 @@ static int parse_options(struct super_block *sb, char *options, int silent,
 	opts->symlink = 0;
 	opts->errors = EXFAT_ERRORS_RO;
 	opts->discard = 0;
+	opts->delayed_meta = 1;
 	*debug = 0;
 
 	if (!options)
@@ -4746,6 +4730,9 @@ static int parse_options(struct super_block *sb, char *options, int silent,
 		case Opt_shortname_winnt:
 			break;
 #endif /* CONFIG_EXFAT_USE_FOR_VFAT */
+		case Opt_nodelayed_meta:
+			opts->delayed_meta = 0;
+			break;
 		default:
 			if (!silent) {
 				exfat_msg(sb, KERN_ERR,
