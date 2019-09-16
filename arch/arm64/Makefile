@@ -82,6 +82,22 @@ ifeq ($(CONFIG_COMPAT_VDSO), y)
   endif
 endif
 
+ifeq ($(cc-name),clang)
+KBUILD_CFLAGS	+= -mllvm -polly \
+		   -mllvm -polly-omp-backend=LLVM \
+		   -mllvm -polly-scheduling=dynamic \
+		   -mllvm -polly-scheduling-chunksize=1 \
+		   -mllvm -polly-vectorizer=polly \
+		   -mllvm -polly-opt-fusion=max \
+		   -mllvm -polly-opt-maximize-bands=yes \
+		   -mllvm -polly-run-dce \
+		   -mllvm -polly-position=after-loopopt \
+		   -mllvm -polly-run-inliner \
+		   -mllvm -polly-detect-keep-going \
+		   -mllvm -polly-opt-simplify-deps=no \
+		   -mllvm -polly-rtc-max-arrays-per-group=40
+endif
+
 KBUILD_CFLAGS	+= -mgeneral-regs-only $(lseinstr) $(vdso32)
 KBUILD_CFLAGS	+= -fno-asynchronous-unwind-tables
 KBUILD_CFLAGS	+= $(call cc-option, -mpc-relative-literal-loads)
