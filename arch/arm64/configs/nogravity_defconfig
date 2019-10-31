@@ -736,11 +736,7 @@ CONFIG_NETWORK_SECMARK=y
 CONFIG_NETFILTER=y
 # CONFIG_NETFILTER_DEBUG is not set
 CONFIG_NETFILTER_ADVANCED=y
-<<<<<<< HEAD
 # CONFIG_BRIDGE_NETFILTER is not set
-=======
-CONFIG_BRIDGE_NETFILTER=y
->>>>>>> 6bc55d5258f7... nogravity_defconfig: enable wireguard
 
 #
 # Core Netfilter Configuration
