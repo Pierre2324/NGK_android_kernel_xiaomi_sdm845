@@ -21,5 +21,4 @@ struct system_pm_ops {
 };
 
 uint32_t register_system_pm_ops(struct system_pm_ops *pm_ops);
-void lpm_cluster_use_deepest_state(bool enable);
 #endif
