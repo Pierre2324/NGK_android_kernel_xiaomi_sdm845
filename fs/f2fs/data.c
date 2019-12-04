@@ -1710,8 +1710,6 @@ static int f2fs_read_single_page(struct inode *inode, struct page *page,
 	bool bio_encrypted;
 	u64 dun;
 	int ret = 0;
-	bool bio_encrypted;
-	u64 dun;
 
 	block_in_file = (sector_t)page_index(page);
 	last_block = block_in_file + nr_pages;
