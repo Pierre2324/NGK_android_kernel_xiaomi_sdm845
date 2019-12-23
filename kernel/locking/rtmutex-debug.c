@@ -101,11 +101,10 @@ void debug_rt_mutex_print_deadlock(struct rt_mutex_waiter *waiter)
 		return;
 	}
 
-	pr_warn("\n");
-	pr_warn("============================================\n");
-	pr_warn("WARNING: circular locking deadlock detected!\n");
-	pr_warn("%s\n", print_tainted());
-	pr_warn("--------------------------------------------\n");
+	printk("\n============================================\n");
+	printk(  "[ BUG: circular locking deadlock detected! ]\n");
+	printk("%s\n", print_tainted());
+	printk(  "--------------------------------------------\n");
 	printk("%s/%d is deadlocking current task %s/%d\n\n",
 	       task->comm, task_pid_nr(task),
 	       current->comm, task_pid_nr(current));
