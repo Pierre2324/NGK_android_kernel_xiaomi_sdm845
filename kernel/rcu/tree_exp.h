@@ -20,26 +20,16 @@
  * Authors: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
  */
 
-/*
- * Record the start of an expedited grace period.
- */
+/* Wrapper functions for expedited grace periods.  */
 static void rcu_exp_gp_seq_start(struct rcu_state *rsp)
 {
 	rcu_seq_start(&rsp->expedited_sequence);
 }
-
-/*
- * Record the end of an expedited grace period.
- */
 static void rcu_exp_gp_seq_end(struct rcu_state *rsp)
 {
 	rcu_seq_end(&rsp->expedited_sequence);
 	smp_mb(); /* Ensure that consecutive grace periods serialize. */
 }
-
-/*
- * Take a snapshot of the expedited-grace-period counter.
- */
 static unsigned long rcu_exp_gp_seq_snap(struct rcu_state *rsp)
 {
 	unsigned long s;
@@ -49,12 +39,6 @@ static unsigned long rcu_exp_gp_seq_snap(struct rcu_state *rsp)
 	trace_rcu_exp_grace_period(rsp->name, s, TPS("snap"));
 	return s;
 }
-
-/*
- * Given a counter snapshot from rcu_exp_gp_seq_snap(), return true
- * if a full expedited grace period has elapsed since that snapshot
- * was taken.
- */
 static bool rcu_exp_gp_seq_done(struct rcu_state *rsp, unsigned long s)
 {
 	return rcu_seq_done(&rsp->expedited_sequence, s);
@@ -147,7 +131,7 @@ static void __maybe_unused sync_exp_reset_tree(struct rcu_state *rsp)
  *
  * Caller must hold the rcu_state's exp_mutex.
  */
-static bool sync_rcu_preempt_exp_done(struct rcu_node *rnp)
+static int sync_rcu_preempt_exp_done(struct rcu_node *rnp)
 {
 	return rnp->exp_tasks == NULL &&
 	       READ_ONCE(rnp->expmask) == 0;
@@ -292,7 +276,7 @@ static bool exp_funnel_lock(struct rcu_state *rsp, unsigned long s)
 			trace_rcu_exp_funnel_lock(rsp->name, rnp->level,
 						  rnp->grplo, rnp->grphi,
 						  TPS("wait"));
-			wait_event(rnp->exp_wq[rcu_seq_ctr(s) & 0x3],
+			wait_event(rnp->exp_wq[(s >> 1) & 0x3],
 				   sync_exp_work_done(rsp,
 						      &rdp->exp_workdone2, s));
 			return true;
@@ -331,8 +315,6 @@ static void sync_sched_exp_handler(void *data)
 		return;
 	}
 	__this_cpu_write(rcu_sched_data.cpu_no_qs.b.exp, true);
-	/* Store .exp before .rcu_urgent_qs. */
-	smp_store_release(this_cpu_ptr(&rcu_dynticks.rcu_urgent_qs), true);
 	resched_cpu(smp_processor_id());
 }
 
@@ -374,11 +356,12 @@ static void sync_rcu_exp_select_cpus(struct rcu_state *rsp,
 		mask_ofl_test = 0;
 		for_each_leaf_node_possible_cpu(rnp, cpu) {
 			struct rcu_data *rdp = per_cpu_ptr(rsp->rda, cpu);
+			struct rcu_dynticks *rdtp = &per_cpu(rcu_dynticks, cpu);
 
 			rdp->exp_dynticks_snap =
-				rcu_dynticks_snap(rdp->dynticks);
+				atomic_add_return(0, &rdtp->dynticks);
 			if (raw_smp_processor_id() == cpu ||
-			    rcu_dynticks_in_eqs(rdp->exp_dynticks_snap) ||
+			    !(rdp->exp_dynticks_snap & 0x1) ||
 			    !(rnp->qsmaskinitnext & rdp->grpmask))
 				mask_ofl_test |= rdp->grpmask;
 		}
@@ -397,12 +380,13 @@ static void sync_rcu_exp_select_cpus(struct rcu_state *rsp,
 		for_each_leaf_node_possible_cpu(rnp, cpu) {
 			unsigned long mask = leaf_node_cpu_bit(rnp, cpu);
 			struct rcu_data *rdp = per_cpu_ptr(rsp->rda, cpu);
+			struct rcu_dynticks *rdtp = &per_cpu(rcu_dynticks, cpu);
 
 			if (!(mask_ofl_ipi & mask))
 				continue;
 retry_ipi:
-			if (rcu_dynticks_in_eqs_since(rdp->dynticks,
-						      rdp->exp_dynticks_snap)) {
+			if (atomic_add_return(0, &rdtp->dynticks) !=
+			    rdp->exp_dynticks_snap) {
 				mask_ofl_test |= mask;
 				continue;
 			}
@@ -533,8 +517,7 @@ static void rcu_exp_wait_wake(struct rcu_state *rsp, unsigned long s)
 				rnp->exp_seq_rq = s;
 			spin_unlock(&rnp->exp_lock);
 		}
-		smp_mb(); /* All above changes before wakeup. */
-		wake_up_all(&rnp->exp_wq[rcu_seq_ctr(rsp->expedited_sequence) & 0x3]);
+		wake_up_all(&rnp->exp_wq[(rsp->expedited_sequence >> 1) & 0x3]);
 	}
 	trace_rcu_exp_grace_period(rsp->name, s, TPS("endwake"));
 	mutex_unlock(&rsp->exp_wake_mutex);
@@ -612,9 +595,9 @@ static void _synchronize_rcu_expedited(struct rcu_state *rsp,
 	/* Wait for expedited grace period to complete. */
 	rdp = per_cpu_ptr(rsp->rda, raw_smp_processor_id());
 	rnp = rcu_get_root(rsp);
-	wait_event(rnp->exp_wq[rcu_seq_ctr(s) & 0x3],
-		   sync_exp_work_done(rsp, &rdp->exp_workdone0, s));
-	smp_mb(); /* Workqueue actions happen before return. */
+	wait_event(rnp->exp_wq[(s >> 1) & 0x3],
+		   sync_exp_work_done(rsp,
+				      &rdp->exp_workdone0, s));
 
 	/* Let the next expedited grace period start. */
 	mutex_unlock(&rsp->exp_mutex);
@@ -639,11 +622,6 @@ static void _synchronize_rcu_expedited(struct rcu_state *rsp,
 void synchronize_sched_expedited(void)
 {
 	struct rcu_state *rsp = &rcu_sched_state;
-
-	RCU_LOCKDEP_WARN(lock_is_held(&rcu_bh_lock_map) ||
-			 lock_is_held(&rcu_lock_map) ||
-			 lock_is_held(&rcu_sched_lock_map),
-			 "Illegal synchronize_sched_expedited() in RCU read-side critical section");
 
 	/* If only one CPU, this is automatically a grace period. */
 	if (rcu_blocking_is_gp())
@@ -714,11 +692,6 @@ void synchronize_rcu_expedited(void)
 {
 	struct rcu_state *rsp = rcu_state_p;
 
-	RCU_LOCKDEP_WARN(lock_is_held(&rcu_bh_lock_map) ||
-			 lock_is_held(&rcu_lock_map) ||
-			 lock_is_held(&rcu_sched_lock_map),
-			 "Illegal synchronize_rcu_expedited() in RCU read-side critical section");
-
 	if (rcu_scheduler_active == RCU_SCHEDULER_INACTIVE)
 		return;
 	_synchronize_rcu_expedited(rsp, sync_rcu_exp_handler);
@@ -738,3 +711,15 @@ void synchronize_rcu_expedited(void)
 EXPORT_SYMBOL_GPL(synchronize_rcu_expedited);
 
 #endif /* #else #ifdef CONFIG_PREEMPT_RCU */
+
+/*
+ * Switch to run-time mode once Tree RCU has fully initialized.
+ */
+static int __init rcu_exp_runtime_mode(void)
+{
+	rcu_test_sync_prims();
+	rcu_scheduler_active = RCU_SCHEDULER_RUNNING;
+	rcu_test_sync_prims();
+	return 0;
+}
+core_initcall(rcu_exp_runtime_mode);
