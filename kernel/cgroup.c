@@ -62,6 +62,7 @@
 #include <linux/proc_ns.h>
 #include <linux/nsproxy.h>
 #include <linux/file.h>
+#include <linux/binfmts.h>
 #include <linux/cpu_input_boost.h>
 #include <net/sock.h>
 
