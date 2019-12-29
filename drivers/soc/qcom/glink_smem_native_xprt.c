@@ -970,9 +970,9 @@ static void __rx_worker(struct edge_info *einfo, bool atomic_ctx)
 	if (ret)
 		einfo->xprt_if.glink_core_if_ptr->link_up(&einfo->xprt_if);
 
-	if ((atomic_ctx) && ((einfo->tx_resume_needed)
-	    || (einfo->tx_blocked_signal_sent)
-	    || (waitqueue_active(&einfo->tx_blocked_queue)))) /* tx waiting ?*/
+	if ((atomic_ctx) && ((einfo->tx_resume_needed) ||
+		(einfo->tx_blocked_signal_sent) ||
+		(waitqueue_active(&einfo->tx_blocked_queue)))) /* tx waiting ?*/
 		tx_wakeup_worker(einfo);
 
 	/*
