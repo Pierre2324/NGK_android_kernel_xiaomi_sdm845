@@ -6811,6 +6811,8 @@ static int mxt_remove(struct i2c_client *client)
 
 	g_mxt_data = NULL;
 
+	disable_irq(data->irq);
+
 	return 0;
 }
 
