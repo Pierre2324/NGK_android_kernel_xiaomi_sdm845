@@ -134,19 +134,11 @@
 #define ADAPTER_ZIMI_CAR_POWER    0x0b
 #define ADAPTER_XIAOMI_PD_40W     0x0c
 
-
-
 #define VOUTCHANGED          BIT(7)
-
 #define TXDATARCVD           BIT(4)
-
-
 #define VSWITCH              BIT(7)
-
 #define CLRINT               BIT(5)
-
 #define LDOTGL               BIT(1)
-
 #define SENDPROPP            BIT(0)
 
 #define SEND_DEVICE_AUTH     BIT(2)
