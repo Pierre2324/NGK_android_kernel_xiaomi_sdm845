@@ -1202,6 +1202,17 @@ static int smb2_get_prop_wireless_signal(struct smb_charger *chg,
 	return rc;
 }
 
+static int smb2_get_prop_wireless_type(struct smb_charger *chg,
+				union power_supply_propval *val)
+{
+	chg->idtp_psy = power_supply_get_by_name("idt");
+	if (chg->idtp_psy)
+		power_supply_get_property(chg->idtp_psy,
+			POWER_SUPPLY_PROP_TX_ADAPTER, val);
+
+	return 1;
+}
+
 /*****************************
  * WIRELESS PSY REGISTRATION *
  *****************************/
@@ -1210,6 +1221,7 @@ static enum power_supply_property smb2_wireless_props[] = {
 	POWER_SUPPLY_PROP_WIRELESS_VERSION,
 	POWER_SUPPLY_PROP_SIGNAL_STRENGTH,
 	POWER_SUPPLY_PROP_WIRELESS_WAKELOCK,
+	POWER_SUPPLY_PROP_TX_ADAPTER,
 };
 
 static int smb2_wireless_set_prop(struct power_supply *psy,
@@ -1251,6 +1263,9 @@ static int smb2_wireless_get_prop(struct power_supply *psy,
 		break;
 	case POWER_SUPPLY_PROP_WIRELESS_WAKELOCK:
 		val->intval = 1;
+		break;
+	case POWER_SUPPLY_PROP_TX_ADAPTER:
+		smb2_get_prop_wireless_type(chg, val);
 		break;
 	default:
 		return -EINVAL;

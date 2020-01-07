@@ -2556,7 +2556,7 @@ static void smblib_reg_work(struct work_struct *work)
 			parallel_charging_enable = !val.intval;
 		}
 
-		schedule_delayed_work(&chg->reg_work,
+			schedule_delayed_work(&chg->reg_work,
 			CHARGING_PERIOD_S * HZ);
 	}
 	else
@@ -6367,22 +6367,21 @@ static void smblib_typec_reenable_work(struct work_struct *work)
 
 	if (stat == TYPEC_VBUS_STATUS_BIT) {
 		smblib_dbg(chg, PR_MISC, "running typec reenable workaround\n");
-		rc = smblib_masked_write(chg,
-				TYPE_C_INTRPT_ENB_SOFTWARE_CTRL_REG,
-				TYPEC_DISABLE_CMD_BIT,
-				TYPEC_DISABLE_CMD_BIT);
-		if (rc < 0)
-			smblib_err(chg, "Couldn't disable type-c rc=%d\n", rc);
 
-		msleep(200);
+	rc = smblib_masked_write(chg,
+		TYPE_C_INTRPT_ENB_SOFTWARE_CTRL_REG,
+		TYPEC_DISABLE_CMD_BIT,
+		TYPEC_DISABLE_CMD_BIT);
+	if (rc < 0)
+		smblib_err(chg, "Couldn't disable type-c rc=%d\n", rc);
 
-		rc = smblib_masked_write(chg,
-				TYPE_C_INTRPT_ENB_SOFTWARE_CTRL_REG,
-				TYPEC_DISABLE_CMD_BIT, 0);
-		if (rc < 0)
-			smblib_err(chg, "Couldn't enable type-c rc=%d\n", rc);
+	msleep(200);
 
-		/* wait for type-c detection to complete */
+	rc = smblib_masked_write(chg,
+		TYPE_C_INTRPT_ENB_SOFTWARE_CTRL_REG,
+		TYPEC_DISABLE_CMD_BIT, 0);
+	if (rc < 0)
+		smblib_err(chg, "Couldn't enable type-c rc=%d\n", rc);
 	}
 
 unlock:
