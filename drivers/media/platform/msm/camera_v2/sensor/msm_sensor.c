@@ -205,9 +205,9 @@ int msm_sensor_power_up(struct msm_sensor_ctrl_t *s_ctrl)
 					&msm_sensor_secure_func_tbl;
 			}
 		}
-#if IS_ENABLED(CONFIG_ARCH_QM215)
+		#if IS_ENABLED(CONFIG_ARCH_QM215)
 		msleep(60);
-#endif
+		#endif
 		rc = msm_camera_power_up(power_info, s_ctrl->sensor_device_type,
 			sensor_i2c_client);
 		if (rc < 0)
