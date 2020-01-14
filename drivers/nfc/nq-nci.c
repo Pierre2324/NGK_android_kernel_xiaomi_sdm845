@@ -688,7 +688,60 @@ reset_enable_gpio:
 						sizeof(raw_nci_reset_cmd));
 	if (ret < 0) {
 		dev_err(&client->dev,
-		"%s: - i2c_master_send Error\n", __func__);
+		"%s: - i2c_master_send core reset Error\n", __func__);
+
+		if (gpio_is_valid(nqx_dev->firm_gpio)) {
+			gpio_set_value(nqx_dev->firm_gpio, 1);
+			usleep_range(10000, 10100);
+		}
+		gpio_set_value(nqx_dev->en_gpio, 0);
+		usleep_range(10000, 10100);
+		gpio_set_value(nqx_dev->en_gpio, 1);
+		usleep_range(10000, 10100);
+
+		ret = i2c_master_send(client, nci_get_version_cmd,
+						sizeof(nci_get_version_cmd));
+
+		if (ret < 0) {
+			dev_err(&client->dev,
+				"%s: - i2c_master_send get version cmd Error\n",
+				__func__);
+			goto err_nfcc_hw_check;
+		}
+		/* hardware dependent delay */
+		usleep_range(10000, 10100);
+
+		ret = i2c_master_recv(client, nci_get_version_rsp,
+						sizeof(nci_get_version_rsp));
+		if (ret < 0) {
+			dev_err(&client->dev,
+				"%s: - i2c_master_recv get version rsp Error\n",
+				__func__);
+			goto err_nfcc_hw_check;
+		} else {
+			nqx_dev->nqx_info.info.chip_type =
+				nci_get_version_rsp[3];
+			nqx_dev->nqx_info.info.rom_version =
+				nci_get_version_rsp[4];
+
+			if ((nci_get_version_rsp[3] == NFCC_SN100_A)
+				|| (nci_get_version_rsp[3] == NFCC_SN100_B)) {
+				nqx_dev->nqx_info.info.fw_minor =
+					nci_get_version_rsp[6];
+				nqx_dev->nqx_info.info.fw_major =
+					nci_get_version_rsp[7];
+			} else {
+				nqx_dev->nqx_info.info.fw_minor =
+					nci_get_version_rsp[10];
+				nqx_dev->nqx_info.info.fw_major =
+					nci_get_version_rsp[11];
+			}
+		}
+		goto err_nfcc_reset_failed;
+	}
+	ret = is_data_available_for_read(nqx_dev);
+	if (ret < 0) {
+		nqx_disable_irq(nqx_dev);
 		goto err_nfcc_hw_check;
 	}
 	/* hardware dependent delay */
