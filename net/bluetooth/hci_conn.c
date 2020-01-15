@@ -1054,10 +1054,8 @@ struct hci_conn *hci_connect_le_scan(struct hci_dev *hdev, bdaddr_t *dst,
 	if (!conn)
 		return ERR_PTR(-ENOMEM);
 
-	if (hci_explicit_conn_params_set(hdev, dst, dst_type) < 0) {
-		hci_conn_del(conn);
+	if (hci_explicit_conn_params_set(hdev, dst, dst_type) < 0)
 		return ERR_PTR(-EBUSY);
-	}
 
 	conn->state = BT_CONNECT;
 	set_bit(HCI_CONN_SCANNING, &conn->flags);
