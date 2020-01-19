@@ -162,4 +162,9 @@ void of_thermal_handle_trip(struct thermal_zone_device *tz)
 { }
 #endif
 
+#ifdef CONFIG_THERMAL_SUSPEND_RESUME
+void thermal_sconfig_suspend(void);
+void thermal_sconfig_resume(void);
+#endif
+
 #endif /* __THERMAL_CORE_H__ */
