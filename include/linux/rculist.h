@@ -509,8 +509,7 @@ static inline void hlist_add_tail_rcu(struct hlist_node *n,
 {
 	struct hlist_node *i, *last = NULL;
 
-	/* Note: write side code, so rcu accessors are not needed. */
-	for (i = h->first; i; i = i->next)
+	for (i = hlist_first_rcu(h); i; i = hlist_next_rcu(i))
 		last = i;
 
 	if (last) {
