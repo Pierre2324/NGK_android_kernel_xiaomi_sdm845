@@ -1,6 +1,6 @@
 make O=out ARCH=arm64 nogravity_defconfig
 
-PATH="/media/pierre/Expension/Android/PocophoneF1/Kernels/clang-linux-x86/clang-stable/bin:/media/pierre/Expension/Android/PocophoneF1/Kernels/aarch64-maestroTC/bin:${PATH}" \
+PATH="/media/pierre/Expension/Android/PocophoneF1/Kernels/DragonTC-10.0/bin:/media/pierre/Expension/Android/PocophoneF1/Kernels/aarch64-maestroTC/bin:${PATH}" \
 make -j$(nproc --all) O=out \
                       ARCH=arm64 \
                       CC=clang \
