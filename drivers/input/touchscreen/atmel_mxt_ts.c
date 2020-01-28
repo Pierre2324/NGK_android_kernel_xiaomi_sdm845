@@ -2546,7 +2546,6 @@ static int mxt_check_reg_init(struct mxt_data *data)
 	int ret = 0;
 	const char *config_name = NULL;
 	bool is_recheck = false, use_default_cfg = false;
-	u8 *tp_maker = NULL;
 
 	if (data->firmware_updated)
 		use_default_cfg = true;
@@ -2621,10 +2620,7 @@ start:
 		}
 	}
 
-	tp_maker = kzalloc(20, GFP_KERNEL);
-	if (tp_maker == NULL)
-		dev_err(dev, "fail to alloc vendor name memory\n");
-
+	update_hardware_info(TYPE_TP_MAKER, data->panel_id - 0x31);
 	config_name = mxt_get_config(data, use_default_cfg);
 
 	if (data->config_info[0] >= 0x65) {
