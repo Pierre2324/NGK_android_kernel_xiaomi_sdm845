@@ -151,7 +151,6 @@ struct upgrade_fw {
 *****************************************************************************/
 extern struct fts_upgrade *fwupgrade;
 extern struct upgrade_func upgrade_func_ft8719;
-extern struct upgrade_func upgrade_func_ft5452;
 
 /*****************************************************************************
 * Static function prototypes
