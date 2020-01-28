@@ -4588,6 +4588,27 @@ static int fts_init_sensing(struct fts_ts_info *info)
 
 	return error;
 }
+#define MAX_REG_LEN 10
+void fts_restore_regvalues(void)
+{
+	char *temp_buf;
+
+	if (fts_info == NULL)
+		return;
+	logError(1, "%s\n", tag, __func__);
+	if (fts_info->grip_pixel != fts_info->grip_pixel_def) {
+		temp_buf = (char *)kzalloc(MAX_REG_LEN, GFP_KERNEL);
+		if (temp_buf == NULL) {
+			logError(1, "%s %s alloc temp buf error\n", tag, __func__);
+		} else {
+			snprintf(temp_buf, MAX_REG_LEN, "%u", fts_info->grip_pixel);
+			fts_grip_area_store(fts_info->dev, NULL, temp_buf, strlen(temp_buf));
+			memset(temp_buf, 0, MAX_REG_LEN);
+			kfree(temp_buf);
+			temp_buf = NULL;
+		}
+	}
+}
 
 /**
  * @ingroup mode_section
