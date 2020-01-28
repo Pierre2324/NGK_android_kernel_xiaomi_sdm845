@@ -653,7 +653,7 @@ static void fts_release_all_finger(void)
  * Output:
  * Return: return 0 if success
  ***********************************************************************/
-static int fts_input_report_key(struct fts_ts_data *data, int index)
+static __always_inline int fts_input_report_key(struct fts_ts_data *data, int index)
 {
 	u32 ik;
 	int id = data->events[index].id;
@@ -685,7 +685,7 @@ static int fts_input_report_key(struct fts_ts_data *data, int index)
 }
 
 #if FTS_MT_PROTOCOL_B_EN
-static int fts_input_report_b(struct fts_ts_data *data)
+static __always_inline int fts_input_report_b(struct fts_ts_data *data)
 {
 	int i = 0;
 	int uppoint = 0;
@@ -834,7 +834,7 @@ static int fts_input_report_a(struct fts_ts_data *data)
 *  Output:
 *  Return: return 0 if succuss
 *****************************************************************************/
-static int fts_read_touchdata(struct fts_ts_data *data)
+static __always_inline int fts_read_touchdata(struct fts_ts_data *data)
 {
 	int ret = 0;
 	int i = 0;
@@ -867,7 +867,7 @@ static int fts_read_touchdata(struct fts_ts_data *data)
 	buf[0] = 0x00;
 
 	ret = fts_i2c_read(data->client, buf, 1, buf, data->pnt_buf_size);
-	if (ret < 0) {
+	if (unlikely(ret < 0)) {
 		FTS_ERROR("read touchdata failed, ret:%d", ret);
 		return ret;
 	}
@@ -915,28 +915,13 @@ static int fts_read_touchdata(struct fts_ts_data *data)
 			return -EIO;
 		}
 	}
-	if (data->touch_point == 0) {
+
+	if (unlikely(data->touch_point == 0)) {
 		FTS_INFO("no touch point information");
 		return -EIO;
 	}
 
 	return 0;
-}
-
-/*****************************************************************************
-*  Name: fts_report_event
-*  Brief:
-*  Input:
-*  Output:
-*  Return:
-*****************************************************************************/
-static void fts_report_event(struct fts_ts_data *data)
-{
-#if FTS_MT_PROTOCOL_B_EN
-	fts_input_report_b(data);
-#else
-	fts_input_report_a(data);
-#endif
 }
 
 /*****************************************************************************
@@ -951,7 +936,7 @@ static irqreturn_t fts_ts_interrupt(int irq, void *data)
 	int ret = 0;
 	struct fts_ts_data *ts_data = (struct fts_ts_data *)data;
 
-	if (!ts_data) {
+	if (unlikely(!ts_data)) {
 		FTS_ERROR("[INTR]: Invalid fts_ts_data");
 		return IRQ_HANDLED;
 	}
@@ -959,7 +944,7 @@ static irqreturn_t fts_ts_interrupt(int irq, void *data)
 	fts_esdcheck_set_intr(1);
 #endif
 
-	if (ts_data->dev_pm_suspend) {
+	if (unlikely(ts_data->dev_pm_suspend)) {
 		ret = wait_for_completion_timeout(&ts_data->dev_pm_suspend_completion, msecs_to_jiffies(700));
 		if (!ret) {
 			FTS_ERROR("system(i2c) can't finished resuming procedure, skip it");
@@ -968,9 +953,13 @@ static irqreturn_t fts_ts_interrupt(int irq, void *data)
 	}
 
 	ret = fts_read_touchdata(ts_data);
-	if (ret == 0) {
+	if (likely(ret == 0)) {
 		mutex_lock(&ts_data->report_mutex);
-		fts_report_event(ts_data);
+#if FTS_MT_PROTOCOL_B_EN
+		fts_input_report_b(data);
+#else
+		fts_input_report_a(data);
+#endif
 		mutex_unlock(&ts_data->report_mutex);
 	}
 #if FTS_ESDCHECK_EN
@@ -2243,6 +2232,8 @@ static int fts_ts_probe(struct i2c_client *client, const struct i2c_device_id *i
 #endif
 	xiaomitouch_register_modedata(&xiaomi_touch_interfaces);
 #endif
+	update_hardware_info(TYPE_TOUCH, 3);
+	update_hardware_info(TYPE_TP_MAKER, ts_data->lockdown_info[0] - 0x30);
 
 	FTS_FUNC_EXIT();
 	return 0;

@@ -219,8 +219,6 @@ extern struct nvt_ts_data *ts;
 extern struct kmem_cache *kmem_ts_data_pool;
 
 //---extern functions---
-extern int32_t CTP_I2C_READ(struct i2c_client *client, uint16_t address, uint8_t *buf, uint16_t len);
-extern int32_t CTP_I2C_WRITE(struct i2c_client *client, uint16_t address, uint8_t *buf, uint16_t len);
 extern void nvt_bootloader_reset(void);
 extern void nvt_sw_reset_idle(void);
 extern int32_t nvt_check_fw_reset_state(RST_COMPLETE_STATE check_reset_state);
@@ -230,5 +228,81 @@ extern int32_t nvt_check_fw_status(void);
 extern int32_t nvt_set_page(uint16_t i2c_addr, uint32_t addr);
 extern void nvt_stop_crc_reboot(void);
 extern int32_t nvt_get_lockdown_info(char *lockdata);
+
+/*******************************************************
+Description:
+	Novatek touchscreen i2c read function.
+
+return:
+	Executive outcomes. 2---succeed. -5---I/O error
+*******************************************************/
+static inline int32_t CTP_I2C_READ(struct i2c_client *client, uint16_t address, uint8_t *buf, uint16_t len)
+{
+	struct i2c_msg msgs[2];
+	int32_t ret;
+	int32_t retries;
+
+	mutex_lock(&ts->xbuf_lock);
+
+	msgs[0].flags = !I2C_M_RD;
+	msgs[0].addr  = address;
+	msgs[0].len   = 1;
+	msgs[0].buf   = &buf[0];
+
+	msgs[1].flags = I2C_M_RD;
+	msgs[1].addr  = address;
+	msgs[1].len   = len - 1;
+	msgs[1].buf   = ts->xbuf;
+
+	for (retries = 0; retries < 5; retries++) {
+		ret = i2c_transfer(client->adapter, msgs, 2);
+		if (likely(ret == 2))
+			return ret;
+
+		msleep(20);
+	}
+
+	memcpy(buf + 1, ts->xbuf, len - 1);
+
+	mutex_unlock(&ts->xbuf_lock);
+
+	NVT_ERR("i2c read error\n");
+	return -EIO;
+}
+
+/*******************************************************
+Description:
+	Novatek touchscreen i2c write function.
+
+return:
+	Executive outcomes. 1---succeed. -5---I/O error
+*******************************************************/
+static inline int32_t CTP_I2C_WRITE(struct i2c_client *client, uint16_t address, uint8_t *buf, uint16_t len)
+{
+	struct i2c_msg msg;
+	int32_t ret;
+	int32_t retries;
+
+	mutex_lock(&ts->xbuf_lock);
+
+	msg.flags = !I2C_M_RD;
+	msg.addr  = address;
+	msg.len   = len;
+	memcpy(ts->xbuf, buf, len);
+	msg.buf   = ts->xbuf;
+
+	for (retries = 0; retries < 5; retries++) {
+		ret = i2c_transfer(client->adapter, &msg, 1);
+		if (likely(ret == 1))
+			return ret;
+
+		msleep(20);
+	}
+
+	mutex_unlock(&ts->xbuf_lock);
+
+	NVT_ERR("i2c write error\n");
+	return -EIO;
+}
 
 #endif /* _LINUX_NVT_TOUCH_H */
