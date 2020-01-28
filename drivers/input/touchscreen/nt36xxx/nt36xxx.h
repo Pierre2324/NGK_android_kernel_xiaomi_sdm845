@@ -193,8 +193,6 @@ typedef enum {
 extern struct nvt_ts_data *ts;
 
 //---extern functions---
-extern int32_t CTP_I2C_READ(struct i2c_client *client, uint16_t address, uint8_t *buf, uint16_t len);
-extern int32_t CTP_I2C_WRITE(struct i2c_client *client, uint16_t address, uint8_t *buf, uint16_t len);
 extern void nvt_bootloader_reset(void);
 extern void nvt_sw_reset_idle(void);
 extern int32_t nvt_check_fw_reset_state(RST_COMPLETE_STATE check_reset_state);
@@ -210,5 +208,70 @@ extern void nvt_stop_crc_reboot(void);
 extern int32_t Init_BootLoader(void);
 extern int32_t Resume_PD(void);
 extern int32_t nvt_get_lockdown_info(char *lockdata);
+
+/*******************************************************
+Description:
+	Novatek touchscreen i2c read function.
+
+return:
+	Executive outcomes. 2---succeed. -5---I/O error
+*******************************************************/
+static inline int32_t CTP_I2C_READ(struct i2c_client *client, uint16_t address, uint8_t *buf, uint16_t len)
+{
+	struct i2c_msg msgs[2];
+	int32_t ret;
+	int32_t retries;
+
+	msgs[0].flags = !I2C_M_RD;
+	msgs[0].addr  = address;
+	msgs[0].len   = 1;
+	msgs[0].buf   = &buf[0];
+
+	msgs[1].flags = I2C_M_RD;
+	msgs[1].addr  = address;
+	msgs[1].len   = len - 1;
+	msgs[1].buf   = &buf[1];
+
+	for (retries = 0; retries < 5; retries++) {
+		ret = i2c_transfer(client->adapter, msgs, 2);
+		if (likely(ret == 2))
+			return ret;
+
+		msleep(20);
+	}
+
+	NVT_ERR("i2c read error\n");
+	return -EIO;
+}
+
+/*******************************************************
+Description:
+	Novatek touchscreen i2c write function.
+
+return:
+	Executive outcomes. 1---succeed. -5---I/O error
+*******************************************************/
+static inline int32_t CTP_I2C_WRITE(struct i2c_client *client, uint16_t address, uint8_t *buf, uint16_t len)
+{
+	struct i2c_msg msg;
+	int32_t ret;
+	int32_t retries;
+
+	msg.flags = !I2C_M_RD;
+	msg.addr  = address;
+	msg.len   = len;
+	msg.buf   = buf;
+
+	for (retries = 0; retries < 5; retries++) {
+		ret = i2c_transfer(client->adapter, &msg, 1);
+		if (likely(ret == 1))
+			return ret;
+
+		msleep(20);
+	}
+
+	NVT_ERR("i2c write error\n");
+	return -EIO;
+}
 
 #endif /* _LINUX_NVT_TOUCH_H */

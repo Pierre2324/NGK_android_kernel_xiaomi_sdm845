@@ -124,86 +124,6 @@ static void nvt_irq_enable(bool enable)
 
 /*******************************************************
 Description:
-	Novatek touchscreen i2c read function.
-
-return:
-	Executive outcomes. 2---succeed. -5---I/O error
-*******************************************************/
-int32_t CTP_I2C_READ(struct i2c_client *client, uint16_t address, uint8_t *buf, uint16_t len)
-{
-	struct i2c_msg msgs[2];
-	int32_t ret = -1;
-	int32_t retries = 0;
-
-	mutex_lock(&ts->xbuf_lock);
-
-	msgs[0].flags = !I2C_M_RD;
-	msgs[0].addr  = address;
-	msgs[0].len   = 1;
-	msgs[0].buf   = &buf[0];
-
-	msgs[1].flags = I2C_M_RD;
-	msgs[1].addr  = address;
-	msgs[1].len   = len - 1;
-	msgs[1].buf   = ts->xbuf;
-
-	while (retries < 5) {
-		ret = i2c_transfer(client->adapter, msgs, 2);
-		if (ret == 2)	break;
-		retries++;
-	}
-
-	if (unlikely(retries == 5)) {
-		NVT_ERR("error, ret=%d\n", ret);
-		ret = -EIO;
-	}
-
-	memcpy(buf + 1, ts->xbuf, len - 1);
-
-	mutex_unlock(&ts->xbuf_lock);
-
-	return ret;
-}
-
-/*******************************************************
-Description:
-	Novatek touchscreen i2c write function.
-
-return:
-	Executive outcomes. 1---succeed. -5---I/O error
-*******************************************************/
-int32_t CTP_I2C_WRITE(struct i2c_client *client, uint16_t address, uint8_t *buf, uint16_t len)
-{
-	struct i2c_msg msg;
-	int32_t ret = -1;
-	int32_t retries = 0;
-
-	mutex_lock(&ts->xbuf_lock);
-
-	msg.flags = !I2C_M_RD;
-	msg.addr  = address;
-	msg.len   = len;
-	memcpy(ts->xbuf, buf, len);
-	msg.buf   = ts->xbuf;
-
-	while (retries < 5) {
-		ret = i2c_transfer(client->adapter, &msg, 1);
-		if (ret == 1)	break;
-		retries++;
-	}
-
-	if (unlikely(retries == 5)) {
-		NVT_ERR("error, ret=%d\n", ret);
-		ret = -EIO;
-	}
-
-	mutex_unlock(&ts->xbuf_lock);
-
-	return ret;
-}
-
-/*******************************************************
-Description:
 	Novatek touchscreen set index/page/addr address.
 
 return:
@@ -1199,22 +1119,22 @@ return:
 *******************************************************/
 static irqreturn_t nvt_ts_work_func(int irq, void *data)
 {
-	int32_t ret = -1;
-	uint8_t point_data[POINT_DATA_LEN + 1] = {0};
-	uint32_t position = 0;
-	uint32_t input_x = 0;
-	uint32_t input_y = 0;
-	uint32_t input_w = 0;
-	uint32_t input_p = 0;
-	uint8_t input_id = 0;
+	int32_t ret;
+	uint8_t point_data[POINT_DATA_LEN + 1] = { 0, };
+	uint32_t position;
+	uint32_t input_x;
+	uint32_t input_y;
+	uint32_t input_w;
+	uint32_t input_p;
+	uint8_t input_id;
 #if MT_PROTOCOL_B
 	uint8_t press_id[TOUCH_MAX_FINGER_NUM] = {0};
 #endif /* MT_PROTOCOL_B */
-	int32_t i = 0;
-	int32_t finger_cnt = 0;
+	int32_t i;
+	int32_t finger_cnt;
 
 #if WAKEUP_GESTURE
-	if (bTouchIsAwake == 0) {
+	if (unlikely(bTouchIsAwake == 0)) {
 		pm_wakeup_event(&ts->input_dev->dev, 5000);
 	}
 #endif
@@ -1222,9 +1142,9 @@ static irqreturn_t nvt_ts_work_func(int irq, void *data)
 	mutex_lock(&ts->lock);
 
 	ret = CTP_I2C_READ(ts->client, I2C_FW_Address, point_data, POINT_DATA_LEN + 1);
-	if (ret < 0) {
+	if (unlikely(ret < 0)) {
 		NVT_ERR("CTP_I2C_READ failed.(%d)\n", ret);
-		goto XFER_ERROR;
+		goto out;
 	}
 /*
 	//--- dump I2C buf ---
@@ -1239,15 +1159,14 @@ static irqreturn_t nvt_ts_work_func(int irq, void *data)
 #if NVT_TOUCH_ESD_PROTECT
 		nvt_esd_check_enable(true);
 #endif /* #if NVT_TOUCH_ESD_PROTECT */
-		goto XFER_ERROR;
+		goto out;
 	}
 
 #if WAKEUP_GESTURE
-	if (bTouchIsAwake == 0) {
+	if (unlikely(bTouchIsAwake == 0)) {
 		input_id = (uint8_t)(point_data[1] >> 3);
 		nvt_ts_wakeup_gesture_report(input_id, point_data);
-		mutex_unlock(&ts->lock);
-		return IRQ_HANDLED;
+		goto out;
 	}
 #endif
 
@@ -1342,8 +1261,7 @@ static irqreturn_t nvt_ts_work_func(int irq, void *data)
 
 	input_sync(ts->input_dev);
 
-XFER_ERROR:
-
+out:
 	mutex_unlock(&ts->lock);
 
 	return IRQ_HANDLED;
@@ -1616,7 +1534,7 @@ static int32_t nvt_ts_probe(struct i2c_client *client, const struct i2c_device_i
 	nvt_get_fw_info();
 
 	//---allocate input device---
-	ts->input_dev = input_allocate_device();
+ts->input_dev = input_allocate_device();
 	if (ts->input_dev == NULL) {
 		NVT_ERR("allocate input device failed\n");
 		ret = -ENOMEM;
