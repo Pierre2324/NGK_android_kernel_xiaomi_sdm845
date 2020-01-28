@@ -148,9 +148,7 @@ struct upgrade_fw {
 /*****************************************************************************
 * Global variable or extern global variabls/functions
 *****************************************************************************/
-extern struct fts_upgrade *fwupgrade;
 extern struct upgrade_func upgrade_func_ft8719;
-extern struct upgrade_func upgrade_func_ft5452;
 
 /*****************************************************************************
 * Static function prototypes
