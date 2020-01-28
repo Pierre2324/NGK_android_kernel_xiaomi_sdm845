@@ -127,80 +127,6 @@ static uint8_t bTouchIsAwake;
 
 /*******************************************************
 Description:
-	Novatek touchscreen i2c read function.
-
-return:
-	Executive outcomes. 2---succeed. -5---I/O error
-*******************************************************/
-int32_t CTP_I2C_READ(struct i2c_client *client, uint16_t address, uint8_t *buf, uint16_t len)
-{
-	struct i2c_msg msgs[2];
-	int32_t ret = -1;
-	int32_t retries = 0;
-
-	msgs[0].flags = !I2C_M_RD;
-	msgs[0].addr  = address;
-	msgs[0].len   = 1;
-	msgs[0].buf   = &buf[0];
-
-	msgs[1].flags = I2C_M_RD;
-	msgs[1].addr  = address;
-	msgs[1].len   = len - 1;
-	msgs[1].buf   = &buf[1];
-
-	while (retries < 5) {
-		ret = i2c_transfer(client->adapter, msgs, 2);
-		if (ret == 2)	break;
-		retries++;
-		msleep(20);
-		NVT_ERR("error, retry=%d\n", retries);
-	}
-
-	if (unlikely(retries == 5)) {
-		NVT_ERR("error, ret=%d\n", ret);
-		ret = -EIO;
-	}
-
-	return ret;
-}
-
-/*******************************************************
-Description:
-	Novatek touchscreen i2c write function.
-
-return:
-	Executive outcomes. 1---succeed. -5---I/O error
-*******************************************************/
-int32_t CTP_I2C_WRITE(struct i2c_client *client, uint16_t address, uint8_t *buf, uint16_t len)
-{
-	struct i2c_msg msg;
-	int32_t ret = -1;
-	int32_t retries = 0;
-
-	msg.flags = !I2C_M_RD;
-	msg.addr  = address;
-	msg.len   = len;
-	msg.buf   = buf;
-
-	while (retries < 5) {
-		ret = i2c_transfer(client->adapter, &msg, 1);
-		if (ret == 1)	break;
-		retries++;
-		msleep(20);
-		NVT_ERR("error, retry=%d\n", retries);
-	}
-
-	if (unlikely(retries == 5)) {
-		NVT_ERR("error, ret=%d\n", ret);
-		ret = -EIO;
-	}
-
-	return ret;
-}
-
-
-/*******************************************************
-Description:
 	Novatek touchscreen reset MCU then into idle mode
     function.
 
@@ -1123,50 +1049,48 @@ return:
 *******************************************************/
 static void nvt_ts_work_func(struct work_struct *work)
 {
-	int32_t ret = -1;
-	uint8_t point_data[POINT_DATA_LEN + 1] = {0};
-	uint32_t position = 0;
-	uint32_t input_x = 0;
-	uint32_t input_y = 0;
-	uint32_t input_w = 0;
-	uint32_t input_p = 0;
-	uint8_t input_id = 0;
+	int32_t ret;
+	uint8_t point_data[POINT_DATA_LEN + 1] = { 0, };
+	uint32_t position;
+	uint32_t input_x;
+	uint32_t input_y;
+	uint32_t input_w;
+	uint32_t input_p;
+	uint8_t input_id;
 #if MT_PROTOCOL_B
 	uint8_t press_id[TOUCH_MAX_FINGER_NUM] = {0};
 #endif /* MT_PROTOCOL_B */
-	int32_t i = 0;
-	int32_t finger_cnt = 0;
+	int32_t i;
+	int32_t finger_cnt;
 
 	mutex_lock(&ts->lock);
 
-	if (ts->dev_pm_suspend) {
+	if (unlikely(ts->dev_pm_suspend)) {
 		ret = wait_for_completion_timeout(&ts->dev_pm_suspend_completion, msecs_to_jiffies(500));
 		if (!ret) {
 			NVT_ERR("system(i2c) can't finished resuming procedure, skip it\n");
-			goto XFER_ERROR;
+			goto out;
 		}
 	}
 
 	ret = CTP_I2C_READ(ts->client, I2C_FW_Address, point_data, POINT_DATA_LEN + 1);
-	if (ret < 0) {
+	if (unlikely(ret < 0)) {
 		NVT_ERR("CTP_I2C_READ failed.(%d)\n", ret);
-		goto XFER_ERROR;
+		goto out;
 	}
 
 #if NVT_TOUCH_ESD_PROTECT
 	if (nvt_fw_recovery(point_data)) {
 		nvt_esd_check_enable(true);
-		goto XFER_ERROR;
+		goto out;
 	}
 #endif /* #if NVT_TOUCH_ESD_PROTECT */
 
 #if WAKEUP_GESTURE
-	if (bTouchIsAwake == 0) {
+	if (unlikely(bTouchIsAwake == 0)) {
 		input_id = (uint8_t)(point_data[1] >> 3);
 		nvt_ts_wakeup_gesture_report(input_id, point_data);
-		enable_irq(ts->client->irq);
-		mutex_unlock(&ts->lock);
-		return;
+		goto out;
 	}
 #endif
 
@@ -1257,9 +1181,7 @@ static void nvt_ts_work_func(struct work_struct *work)
 
 	input_sync(ts->input_dev);
 
-XFER_ERROR:
-	enable_irq(ts->client->irq);
-
+out:
 	mutex_unlock(&ts->lock);
 }
 
@@ -1272,7 +1194,6 @@ return:
 *******************************************************/
 static irqreturn_t nvt_ts_irq_handler(int32_t irq, void *dev_id)
 {
-	disable_irq_nosync(ts->client->irq);
 	if (bTouchIsAwake == 0) {
 		dev_dbg(&ts->client->dev, "%s gesture wakeup\n", __func__);
 	}
@@ -1724,7 +1645,7 @@ static int32_t nvt_ts_probe(struct i2c_client *client, const struct i2c_device_i
 	mutex_unlock(&ts->lock);
 
 	/*---create workqueue---*/
-	nvt_wq = create_workqueue("nvt_wq");
+	nvt_wq = alloc_workqueue("nvt_wq", WQ_HIGHPRI, 0);
 	if (!nvt_wq) {
 		NVT_ERR("nvt_wq create workqueue failed\n");
 		ret = -ENOMEM;
