@@ -135,6 +135,8 @@ choice
 	config DEFAULT_ANXIETY
 		bool "Anxiety" if IOSCHED_ANXIETY=y
 
+endchoice
+
 config DEFAULT_IOSCHED
 	string
 	default "deadline" if DEFAULT_DEADLINE
