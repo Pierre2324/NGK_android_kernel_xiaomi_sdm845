@@ -44,20 +44,27 @@
 * Global variable or extern global variabls/functions
 *****************************************************************************/
 /* Upgrade FW/PRAMBOOT/LCD CFG */
-static u8 fw_file[] = {
+u8 fw_file[] = {
 #include FTS_UPGRADE_FW_FILE_E10
 };
 
-static struct upgrade_fw fw_list[] = {
+u8 fw_file2[] = {
+#include FTS_UPGRADE_FW_FILE_E5
+};
+
+struct upgrade_fw fw_list[] = {
 	{FTS_PROJECT_NAME, FTS_VENDOR_ID, fw_file, sizeof(fw_file)}
+	,
+	{FTS_PROJECT_NAME1, FTS_VENDOR_ID2, fw_file2, sizeof(fw_file2)}
 	,
 };
 
-static struct upgrade_func *upgrade_func_list[] = {
+struct upgrade_func *upgrade_func_list[] = {
 	&upgrade_func_ft8719,
+	&upgrade_func_ft5452,
 };
 
-static struct fts_upgrade *fwupgrade;
+struct fts_upgrade *fwupgrade;
 
 /*****************************************************************************
 * Static function prototypes
