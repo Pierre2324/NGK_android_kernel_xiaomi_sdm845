@@ -64,6 +64,11 @@ static char boost_buf[128];
  * the thermal core and by the thermal governor code.
  */
 
+static int lock_enable = 0;
+static int lock_sconfig = -1;
+module_param(lock_enable, int, 0644);
+module_param(lock_sconfig, int, 0644);
+
 static struct thermal_governor *__find_governor(const char *name)
 {
 	struct thermal_governor *pos;
@@ -1692,11 +1697,17 @@ static ssize_t
 thermal_sconfig_store(struct device *dev,
 				      struct device_attribute *attr, const char *buf, size_t len)
 {
+	int rv;
 	int val = -1;
 
-	val = simple_strtol(buf, NULL, 10);
+	rv = kstrtoint(buf, 10, &val);
+	if(lock_enable)
+		atomic_set(&switch_mode, lock_sconfig);
+	else
+		atomic_set(&switch_mode, val);
 
-	atomic_set(&switch_mode, val);
+	if (rv)
+		return rv;
 
 	return len;
 }
