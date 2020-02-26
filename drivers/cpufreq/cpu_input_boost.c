@@ -24,12 +24,17 @@ static unsigned int input_boost_freq_lp = CONFIG_INPUT_BOOST_FREQ_LP;
 static unsigned int input_boost_freq_hp = CONFIG_INPUT_BOOST_FREQ_PERF;
 static unsigned short input_boost_duration = CONFIG_INPUT_BOOST_DURATION_MS;
 
+static unsigned int remove_input_boost_freq_lp = CONFIG_REMOVE_INPUT_BOOST_FREQ_LP;
+static unsigned int remove_input_boost_freq_hp = CONFIG_REMOVE_INPUT_BOOST_FREQ_PERF;
+
 module_param(input_boost_freq_lp, uint, 0644);
 module_param(input_boost_freq_hp, uint, 0644);
 module_param(input_boost_duration, short, 0644);
+module_param(remove_input_boost_freq_lp, uint, 0644);
+module_param(remove_input_boost_freq_hp, uint, 0644);
 
 /* Available bits for boost_drv state */
-#define SCREEN_AWAKE		BIT(0)
+#define SCREEN_AWAKE	BIT(0)
 #define INPUT_BOOST		BIT(1)
 #define WAKE_BOOST		BIT(2)
 #define MAX_BOOST		BIT(3)
