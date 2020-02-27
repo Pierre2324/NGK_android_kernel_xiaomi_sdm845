@@ -9,6 +9,8 @@
 #define INT32_MAX	S32_MAX
 #define UINT32_MAX	U32_MAX
 
+#define INT_MAX			((int)(~0U>>1))
+
 typedef __be16 fdt16_t;
 typedef __be32 fdt32_t;
 typedef __be64 fdt64_t;

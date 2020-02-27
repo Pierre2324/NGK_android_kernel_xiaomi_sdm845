@@ -4804,7 +4804,7 @@ static void ixgbe_fdir_filter_restore(struct ixgbe_adapter *adapter)
 	struct ixgbe_hw *hw = &adapter->hw;
 	struct hlist_node *node2;
 	struct ixgbe_fdir_filter *filter;
-	u8 queue;
+	u64 action;
 
 	spin_lock(&adapter->fdir_perfect_lock);
 
@@ -4813,34 +4813,18 @@ static void ixgbe_fdir_filter_restore(struct ixgbe_adapter *adapter)
 
 	hlist_for_each_entry_safe(filter, node2,
 				  &adapter->fdir_filter_list, fdir_node) {
-		if (filter->action == IXGBE_FDIR_DROP_QUEUE) {
-			queue = IXGBE_FDIR_DROP_QUEUE;
-		} else {
-			u32 ring = ethtool_get_flow_spec_ring(filter->action);
-			u8 vf = ethtool_get_flow_spec_ring_vf(filter->action);
 
-			if (!vf && (ring >= adapter->num_rx_queues)) {
-				e_err(drv, "FDIR restore failed without VF, ring: %u\n",
-				      ring);
-				continue;
-			} else if (vf &&
-				   ((vf > adapter->num_vfs) ||
-				     ring >= adapter->num_rx_queues_per_pool)) {
-				e_err(drv, "FDIR restore failed with VF, vf: %hhu, ring: %u\n",
-				      vf, ring);
-				continue;
-			}
-
-			/* Map the ring onto the absolute queue index */
-			if (!vf)
-				queue = adapter->rx_ring[ring]->reg_idx;
-			else
-				queue = ((vf - 1) *
-					adapter->num_rx_queues_per_pool) + ring;
-		}
+		action = filter->action;
+		if (action != IXGBE_FDIR_DROP_QUEUE && action != 0)
+			action =
+			(action >> ETHTOOL_RX_FLOW_SPEC_RING_VF_OFF) - 1;
 
 		ixgbe_fdir_write_perfect_filter_82599(hw,
-				&filter->filter, filter->sw_idx, queue);
+				&filter->filter,
+				filter->sw_idx,
+				(action == IXGBE_FDIR_DROP_QUEUE) ?
+				IXGBE_FDIR_DROP_QUEUE :
+				adapter->rx_ring[action]->reg_idx);
 	}
 
 	spin_unlock(&adapter->fdir_perfect_lock);
