@@ -352,7 +352,7 @@ static const struct clk_ops clk_ops_l3_osm = {
 
 static const struct clk_ops clk_ops_pwrcl_core = {
 	.set_rate = clk_cpu_set_rate,
-	.round_rate = clk_cpu_round_rate,
+	.determine_rate = clk_cpu_determine_rate,
 	.recalc_rate = clk_cpu_recalc_rate,
 	.debug_init = clk_debug_measure_add,
 };
