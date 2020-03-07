@@ -16,8 +16,9 @@
 
 #define BOEFFLA_WL_BLOCKER_VERSION	"1.1.0"
 
-#define LIST_WL_DEFAULT				"qcom_rx_wakelock;wlan;wlan_wow_wl;wlan_extscan_wl;netmgr_wl;NETLINK;898000.qcom,qup_uart;IPA_WS;wlan_ipa;wlan_pno_wl;wcnss_filter_lock;hal_bluetooth_lock;c440000.qcom,spmi:qcom,pmi8998@2:qcom,qpnp-smb2"
+#define LIST_WL_DEFAULT				"qcom_rx_wakelock;wlan;wlan_wow_wl;wlan_extscan_wl;netmgr_wl;NETLINK;898000.qcom,qup_uart;IPA_WS;wlan_ipa;wlan_pno_wl;wcnss_filter_lock;hal_bluetooth_lock;c440000.qcom,spmi:qcom,pmi8998@2:qcom,qpnp-smb2;13930000.decon_fb;ssp_comm_wake_lock;GPSD;ssp_wake_lock;tsp_wakelock;umts_ipc0;umts_ipc1;mmc0_detect"
 
-#define LENGTH_LIST_WL				255
-#define LENGTH_LIST_WL_DEFAULT		114
+#define LENGTH_LIST_WL				2048
+#define LENGTH_LIST_WL_DEFAULT		255
+
 #define LENGTH_LIST_WL_SEARCH		LENGTH_LIST_WL + LENGTH_LIST_WL_DEFAULT + 5
