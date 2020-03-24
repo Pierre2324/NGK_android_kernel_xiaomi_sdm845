@@ -64,6 +64,7 @@
 #include <linux/file.h>
 #include <linux/binfmts.h>
 #include <linux/cpu_input_boost.h>
+#include <linux/devfreq_boost.h>
 #include <net/sock.h>
 
 #define CREATE_TRACE_POINTS
