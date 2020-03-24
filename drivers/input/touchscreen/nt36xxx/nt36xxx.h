@@ -156,6 +156,7 @@ struct nvt_ts_data {
 	int gesture_enabled;
 #endif
 	int current_index;
+	struct proc_dir_entry *input_proc;
 };
 
 #if WAKEUP_GESTURE
