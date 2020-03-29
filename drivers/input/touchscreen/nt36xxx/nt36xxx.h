@@ -107,6 +107,7 @@ struct nvt_ts_data {
 	struct i2c_client *client;
 	struct input_dev *input_dev;
 	struct delayed_work nvt_fwu_work;
+	struct attribute_group attrs;
 
 	struct nvt_config_info *config_array;
 	struct pinctrl *ts_pinctrl;

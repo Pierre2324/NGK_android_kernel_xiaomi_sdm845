@@ -1756,6 +1756,17 @@ ts->input_dev = input_allocate_device();
 	}
 #endif
 
+	ts->attrs.attrs = nvt_attr_group;
+	ret = sysfs_create_group(&client->dev.kobj, &ts->attrs);
+	if (ret) {
+		NVT_ERR("Cannot create sysfs structure!\n");
+	}
+
+	ret = novatek_input_symlink(ts);
+	if (ret < 0) {
+		NVT_ERR("Failed to symlink input device!\n");
+	}
+
 	bTouchIsAwake = 1;
 	NVT_LOG("end\n");
 
