@@ -1477,14 +1477,6 @@ static int fts_fwupg_get_ver_in_host(u8 *ver)
 	return 0;
 }
 
-static int check_chip_id(u8 chip_id1, u8 chip_id2)
-{
-if (check_chip_id(chip_id1, chip_id2)) {
-		return 1;
-	}
-	return 0;
-}
-
 /************************************************************************
  * fts_fwupg_need_upgrade - check fw need upgrade or not
  *
