@@ -2967,7 +2967,7 @@ static ssize_t __cgroup_procs_write(struct kernfs_open_file *of, char *buf,
 	    task_is_zygote(tsk->parent)){
 		cpu_input_boost_kick_max(1000);
 		devfreq_boost_kick_max(DEVFREQ_MSM_CPUBW, 1000);
-		devfreq_boost_kick_max(DEVFREQ_MSM_LLCCBW, 1000);
+		/* devfreq_boost_kick_max(DEVFREQ_MSM_LLCCBW, 1000); */
 	}
 	
 	put_task_struct(tsk);
