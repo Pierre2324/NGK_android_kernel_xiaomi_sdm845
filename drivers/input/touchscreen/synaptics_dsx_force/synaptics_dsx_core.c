@@ -5,7 +5,6 @@
  *
  * Copyright (C) 2012 Alexandra Chin <alexandra.chin@tw.synaptics.com>
  * Copyright (C) 2012 Scott Lin <scott.lin@tw.synaptics.com>
- * Copyright (C) 2018 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,7 +40,7 @@
 #include <linux/gpio.h>
 #include <linux/platform_device.h>
 #include <linux/regulator/consumer.h>
-#include <linux/input/synaptics_dsx_force.h>
+#include <linux/input/synaptics_dsx.h>
 #include <linux/hwinfo.h>
 #include "synaptics_dsx_core.h"
 
@@ -996,6 +995,7 @@ static ssize_t synaptics_secure_touch_enable_store(struct device *dev,
 
 	err = count;
 
+
 	switch (value) {
 	case 0:
 		if (atomic_read(&data->st_enabled) == 0)
@@ -1040,7 +1040,7 @@ static ssize_t synaptics_secure_touch_enable_store(struct device *dev,
 		err = -EINVAL;
 		break;
 	}
-	dev_err(data->pdev->dev.parent, "synaptics_secure_touch_enable_store err=%x\n", err);
+       dev_err(data->pdev->dev.parent, "synaptics_secure_touch_enable_store err=%x\n", err);
 	return err;
 }
 
@@ -5386,7 +5386,7 @@ static int synaptics_rmi4_probe(struct platform_device *pdev)
 	rmi4_data->reset_device = synaptics_rmi4_reset_device;
 	rmi4_data->irq_enable = synaptics_rmi4_irq_enable;
 	rmi4_data->sleep_enable = synaptics_rmi4_sleep_enable;
-
+//	rmi4_data->hw_version = get_hw_version_major();
 
 	mutex_init(&(rmi4_data->rmi4_reset_mutex));
 	mutex_init(&(rmi4_data->rmi4_report_mutex));
@@ -5595,7 +5595,6 @@ static int synaptics_rmi4_probe(struct platform_device *pdev)
 #endif
 
 	device_init_wakeup(&pdev->dev, 1);
-	update_hardware_info(TYPE_TOUCH, 1); /* Synaptics */
 
 	synaptics_secure_touch_init(rmi4_data);
 	synaptics_secure_touch_stop(rmi4_data, 1);
@@ -6109,7 +6108,7 @@ static int synaptics_rmi4_drm_notifier_cb(struct notifier_block *self,
 				rmi4_data->fb_ready = true;
 				if (rmi4_data->wakeup_en) {
 					drm_panel_reset_skip_enable(false);
-
+					//drm_regulator_ctrl(rmi4_data, DISP_REG_ALL, false);
 					drm_dsi_ulps_enable(false);
 					rmi4_data->wakeup_en = false;
 				}
@@ -6127,7 +6126,7 @@ static int synaptics_rmi4_drm_notifier_cb(struct notifier_block *self,
 
 				if (rmi4_data->enable_wakeup_gesture) {
 					rmi4_data->wakeup_en = true;
-
+					//drm_regulator_ctrl(rmi4_data, DISP_REG_ALL, true);
 					drm_panel_reset_skip_enable(true);
 					drm_dsi_ulps_enable(true);
 				}
