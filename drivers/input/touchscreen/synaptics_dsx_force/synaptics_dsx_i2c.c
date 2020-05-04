@@ -5,7 +5,6 @@
  *
  * Copyright (C) 2012 Alexandra Chin <alexandra.chin@tw.synaptics.com>
  * Copyright (C) 2012 Scott Lin <scott.lin@tw.synaptics.com>
- * Copyright (C) 2018 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,7 +40,7 @@
 #include <linux/types.h>
 #include <linux/of_gpio.h>
 #include <linux/platform_device.h>
-#include <linux/input/synaptics_dsx_force.h>
+#include <linux/input/synaptics_dsx.h>
 #include "synaptics_dsx_core.h"
 
 #define SYN_I2C_RETRY_TIMES 4
@@ -57,6 +56,44 @@ static struct synaptics_dsx_hw_interface hw_if;
 static struct platform_device *synaptics_dsx_i2c_device;
 
 #ifdef CONFIG_OF
+static void dump_dt(struct device *dev, struct synaptics_dsx_board_data *bdata)
+{
+#if 0
+	int i, j;
+	char tmp[256] = {0};
+	dev_dbg(dev, "START of device tree dump:\n");
+	dev_dbg(dev, "power_gpio = %d\n", bdata->power_gpio);
+	dev_dbg(dev, "reset_gpio = %d\n", bdata->reset_gpio);
+	dev_dbg(dev, "irq_gpio = %d\n", bdata->irq_gpio);
+	dev_dbg(dev, "power_on_state = %d\n", (int)bdata->power_on_state);
+	dev_dbg(dev, "reset_on_state = %d\n", (int)bdata->reset_on_state);
+	dev_dbg(dev, "power_delay_ms = %d\n", (int)bdata->power_delay_ms);
+	dev_dbg(dev, "reset_delay_ms = %d\n", (int)bdata->reset_delay_ms);
+	dev_dbg(dev, "reset_active_ms = %d\n", (int)bdata->reset_active_ms);
+	dev_dbg(dev, "cut_off_power = %d\n", (int)bdata->cut_off_power);
+	dev_dbg(dev, "swap_axes = %d\n", (int)bdata->swap_axes);
+	dev_dbg(dev, "x_flip = %d\n", (int)bdata->x_flip);
+	dev_dbg(dev, "y_flip = %d\n", (int)bdata->y_flip);
+	dev_dbg(dev, "ub_i2c_addr = %d\n", (int)bdata->ub_i2c_addr);
+	dev_dbg(dev, "lockdown_area = %d\n", (int)bdata->lockdown_area);
+
+	for (i = 0; i < bdata->tp_id_num; i++)
+		snprintf(tmp, 256, "%s %d", tmp, bdata->tp_id_bytes[i]);
+	dev_dbg(dev, "tp_id_bytes =%s\n", tmp);
+
+	dev_dbg(dev, "config_array_size = %d\n", (int)bdata->config_array_size);
+	for (i = 0; i < bdata->config_array_size; i++) {
+		memset(tmp, 0, sizeof(tmp));
+		for (j = 0; j < bdata->tp_id_num; j++)
+			snprintf(tmp, 256, "%s 0x%0x", tmp, bdata->config_array[i].tp_ids[j]);
+		dev_dbg(dev, "config[%d].tp_id =%s", i, tmp);
+
+		dev_dbg(dev, "config[%d].fw_name = %s\n", i, bdata->config_array[i].fw_name);
+	}
+	dev_dbg(dev, "END of device tree dump\n");
+#endif
+}
+
 static int parse_dt(struct device *dev, struct synaptics_dsx_board_data *bdata)
 {
 	int retval;
@@ -133,7 +170,7 @@ static int parse_dt(struct device *dev, struct synaptics_dsx_board_data *bdata)
 
 	retval = of_property_read_string(np, "synaptics,power-gpio-name", &name);
 	if (retval == -EINVAL)
-		bdata->power_gpio_name = NULL;
+		bdata->power_gpio_name= NULL;
 	else if (retval < 0)
 		return retval;
 	else
@@ -141,7 +178,7 @@ static int parse_dt(struct device *dev, struct synaptics_dsx_board_data *bdata)
 
 	retval = of_property_read_string(np, "synaptics,reset-gpio-name", &name);
 	if (retval == -EINVAL)
-		bdata->reset_gpio_name = NULL;
+		bdata->reset_gpio_name= NULL;
 	else if (retval < 0)
 		return retval;
 	else
@@ -149,7 +186,7 @@ static int parse_dt(struct device *dev, struct synaptics_dsx_board_data *bdata)
 
 	retval = of_property_read_string(np, "synaptics,irq-gpio-name", &name);
 	if (retval == -EINVAL)
-		bdata->irq_gpio_name = NULL;
+		bdata->irq_gpio_name= NULL;
 	else if (retval < 0)
 		return retval;
 	else
@@ -168,6 +205,27 @@ static int parse_dt(struct device *dev, struct synaptics_dsx_board_data *bdata)
 			bdata->power_on_state = value;
 	} else
 		bdata->power_gpio = -1;
+
+	retval = of_property_read_u32(np, "synaptics,palm-rx-channel",
+			&value);
+	if (retval < 0)
+		bdata->palm_rx_channel = 0;
+	else
+		bdata->palm_rx_channel = value;
+
+	retval = of_property_read_u32(np, "synaptics,palm-rx-area",
+			&value);
+	if (retval < 0)
+		bdata->palm_rx_area = 0;
+	else
+		bdata->palm_rx_area = value;
+
+	retval = of_property_read_u32(np, "synaptics,palm-tx-disable",
+			&value);
+	if (retval < 0)
+		bdata->palm_tx_disable = 0;
+	else
+		bdata->palm_tx_disable = value;
 
 	retval = of_property_read_u32(np, "synaptics,power-delay-ms",
 			&value);
@@ -698,6 +756,7 @@ static int parse_dt(struct device *dev, struct synaptics_dsx_board_data *bdata)
 		config_info++;
 	};
 
+	dump_dt(dev, bdata);
 	return 0;
 }
 #endif
@@ -1078,7 +1137,7 @@ MODULE_DEVICE_TABLE(of, synaptics_rmi4_of_match_table_force);
 
 static struct i2c_driver synaptics_rmi4_i2c_driver = {
 	.driver = {
-		.name = "synaptics_dsi_force",
+		.name = "synaptics_dsi_force",//I2C_DRIVER_NAME,
 		.owner = THIS_MODULE,
 		.of_match_table = synaptics_rmi4_of_match_table_force,
 	},

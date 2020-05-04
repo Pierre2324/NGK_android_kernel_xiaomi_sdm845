@@ -3,7 +3,7 @@
  * FocalTech fts TouchScreen driver.
  *
  * Copyright (c) 2010-2017, Focaltech Ltd. All rights reserved.
- * Copyright (C) 2018 XiaoMi, Inc.
+ * Copyright (C) 2019 XiaoMi, Inc.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -45,28 +45,24 @@
 *****************************************************************************/
 /* Upgrade FW/PRAMBOOT/LCD CFG */
 u8 fw_file[] = {
-#include FTS_UPGRADE_FW_FILE
+
+#include FTS_UPGRADE_FW_FILE_E10
 };
 
 u8 fw_file2[] = {
-#include FTS_UPGRADE_FW2_FILE
-};
-
-u8 fw_file3[] = {
-#include FTS_UPGRADE_FW3_FILE
+#include FTS_UPGRADE_FW_FILE_E5
 };
 
 struct upgrade_fw fw_list[] = {
-	{FTS_VENDOR_ID, fw_file, sizeof(fw_file)}
+	{FTS_PROJECT_NAME, FTS_VENDOR_ID, fw_file, sizeof(fw_file)}
 	,
-	{FTS_VENDOR_ID2, fw_file2, sizeof(fw_file2)}
-	,
-	{FTS_VENDOR_ID3, fw_file3, sizeof(fw_file3)}
+	{FTS_PROJECT_NAME1, FTS_VENDOR_ID2, fw_file2, sizeof(fw_file2)}
 	,
 };
 
 struct upgrade_func *upgrade_func_list[] = {
 	&upgrade_func_ft8719,
+	&upgrade_func_ft5452,
 };
 
 struct fts_upgrade *fwupgrade;

@@ -4,7 +4,7 @@
  * FTS Capacitive touch screen controller (FingerTipS)
  *
  * Copyright (C) 2016, STMicroelectronics Limited.
- * Copyright (C) 2018 XiaoMi, Inc.
+ * Copyright (C) 2019 XiaoMi, Inc.
  * Authors: AMG(Analog Mems Group)
  *
  * 		marco.cali@st.com
@@ -3667,27 +3667,6 @@ static int fts_init_sensing(struct fts_ts_info *info)
 
 	return error;
 }
-#define MAX_REG_LEN 10
-void fts_restore_regvalues(void)
-{
-	char *temp_buf;
-
-	if (fts_info == NULL)
-		return;
-	logError(1, "%s\n", tag, __func__);
-	if (fts_info->grip_pixel != fts_info->grip_pixel_def) {
-		temp_buf = (char *)kzalloc(MAX_REG_LEN, GFP_KERNEL);
-		if (temp_buf == NULL) {
-			logError(1, "%s %s alloc temp buf error\n", tag, __func__);
-		} else {
-			snprintf(temp_buf, MAX_REG_LEN, "%u", fts_info->grip_pixel);
-			fts_grip_area_store(fts_info->dev, NULL, temp_buf, strlen(temp_buf));
-			memset(temp_buf, 0, MAX_REG_LEN);
-			kfree(temp_buf);
-			temp_buf = NULL;
-		}
-	}
-}
 
 /**
  * @ingroup mode_section
@@ -4900,6 +4879,7 @@ static int fts_probe(struct spi_device *client)
 	int skip_5_1 = 0;
 	u16 bus_type;
 	u8 *tp_maker;
+	const char *display_name;
 
 	logError(1, "%s %s: driver ver: %s\n", tag, __func__,
 		 FTS_TS_DRV_VERSION);
@@ -5199,6 +5179,42 @@ static int fts_probe(struct spi_device *client)
 	error = fts_proc_init();
 	if (error < OK)
 		logError(1, "%s Error: can not create /proc file! \n", tag);
+
+	info->dbclick_count = 0;
+
+	tp_maker = kzalloc(20, GFP_KERNEL);
+	if (tp_maker == NULL)
+		logError(1, "%s fail to alloc vendor name memory\n", tag);
+
+	device_init_wakeup(&client->dev, 1);
+#ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE
+	memset(&xiaomi_touch_interfaces, 0x00, sizeof(struct xiaomi_touch_interface));
+#ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE_GAMEMODE
+	INIT_WORK(&info->cmd_update_work, fts_cmd_update_work);
+	mutex_init(&info->cmd_update_mutex);
+	xiaomi_touch_interfaces.getModeValue = fts_get_mode_value;
+	xiaomi_touch_interfaces.setModeValue = fts_set_cur_value;
+	xiaomi_touch_interfaces.resetMode = fts_reset_mode;
+	xiaomi_touch_interfaces.getModeAll = fts_get_mode_all;
+	info->touch_feature_wq =
+	    alloc_workqueue("fts-touch-feature",
+			    WQ_UNBOUND | WQ_HIGHPRI | WQ_CPU_INTENSIVE, 1);
+	if (!info->touch_feature_wq) {
+		logError(1, "%s Cannot create touch feature work thread\n", tag);
+		goto ProbeErrorExit_8;
+	}
+	init_waitqueue_head(&info->wait_queue);
+	wait_queue_complete = true;
+
+	fts_read_touchmode_data();
+	fts_init_touchmode_data();
+#endif
+#ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE_SENSOR
+	xiaomi_touch_interfaces.p_sensor_write = fts_p_sensor_write;
+	xiaomi_touch_interfaces.palm_sensor_write = fts_palm_sensor_write;
+#endif
+	xiaomitouch_register_modedata(&xiaomi_touch_interfaces);
+#endif
 
 	tp_maker = kzalloc(20, GFP_KERNEL);
 	if (tp_maker == NULL)

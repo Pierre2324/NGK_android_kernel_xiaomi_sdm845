@@ -2,7 +2,6 @@
  * Atmel maXTouch Touchscreen driver
  *
  * Copyright (C) 2010 Samsung Electronics Co.Ltd
- * Copyright (C) 2018 XiaoMi, Inc.
  * Copyright (C) 2011 Atmel Corporation
  * Author: Joonyoung Shim <jy0922.shim@samsung.com>
  *
@@ -2547,6 +2546,7 @@ static int mxt_check_reg_init(struct mxt_data *data)
 	int ret = 0;
 	const char *config_name = NULL;
 	bool is_recheck = false, use_default_cfg = false;
+	u8 *tp_maker = NULL;
 
 	if (data->firmware_updated)
 		use_default_cfg = true;
@@ -2620,7 +2620,11 @@ start:
 			dev_err(dev, "No lockdown info stored\n");
 		}
 	}
-	update_hardware_info(TYPE_TP_MAKER, data->panel_id - 0x31);
+
+	tp_maker = kzalloc(20, GFP_KERNEL);
+	if (tp_maker == NULL)
+		dev_err(dev, "fail to alloc vendor name memory\n");
+
 	config_name = mxt_get_config(data, use_default_cfg);
 
 	if (data->config_info[0] >= 0x65) {
@@ -6818,8 +6822,6 @@ static int mxt_remove(struct i2c_client *client)
 	data = NULL;
 
 	g_mxt_data = NULL;
-
-	disable_irq(data->irq);
 
 	return 0;
 }

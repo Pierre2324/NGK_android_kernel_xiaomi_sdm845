@@ -3,7 +3,7 @@
  * FocalTech TouchScreen driver.
  *
  * Copyright (c) 2010-2017, FocalTech Systems, Ltd., all rights reserved.
- * Copyright (C) 2018 XiaoMi, Inc.
+ * Copyright (C) 2019 XiaoMi, Inc.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -48,7 +48,6 @@
 *****************************************************************************/
 #define FTS_DRIVER_NAME                     "fts_ts"
 #define INTERVAL_READ_REG                   100	/* unit:ms */
-#define TIMEOUT_READ_REG                    1000	/* unit:ms */
 #if FTS_POWER_SOURCE_CUST_EN
 #define FTS_VTG_MIN_UV                      2600000
 #define FTS_VTG_MAX_UV                      3300000
@@ -1760,6 +1759,14 @@ static int fts_ts_probe(struct i2c_client *client, const struct i2c_device_id *i
 	}
 #endif
 
+#if FTS_TEST_EN
+	ret = fts_test_init(client);
+	if (ret) {
+		FTS_ERROR("init production test fail");
+		goto err_debugfs_create;
+	}
+#endif
+
 #if FTS_ESDCHECK_EN
 	ret = fts_esdcheck_init(ts_data);
 	if (ret) {
@@ -1806,8 +1813,23 @@ static int fts_ts_probe(struct i2c_client *client, const struct i2c_device_id *i
 	ts_data->early_suspend.resume = fts_ts_late_resume;
 	register_early_suspend(&ts_data->early_suspend);
 #endif
-	update_hardware_info(TYPE_TOUCH, 3);
-	update_hardware_info(TYPE_TP_MAKER, ts_data->lockdown_info[0] - 0x30);
+#ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE
+	memset(&xiaomi_touch_interfaces, 0x00, sizeof(struct xiaomi_touch_interface));
+#ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE_GAMEMODE
+	xiaomi_touch_interfaces.getModeValue = fts_get_mode_value;
+	xiaomi_touch_interfaces.setModeValue = fts_set_cur_value;
+	xiaomi_touch_interfaces.resetMode = fts_reset_mode;
+	xiaomi_touch_interfaces.getModeAll = fts_get_mode_all;
+	fts_init_touchmode_data();
+#endif
+#ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE_SENSOR
+	ts_data->tp_class = get_xiaomi_touch_class();
+	if (ts_data->tp_class) {
+		xiaomi_touch_interfaces.palm_sensor_write = fts_palmsensor_enable;
+	}
+#endif
+	xiaomitouch_register_modedata(&xiaomi_touch_interfaces);
+#endif
 
 	FTS_FUNC_EXIT();
 	return 0;
@@ -1879,6 +1901,10 @@ static int fts_ts_remove(struct i2c_client *client)
 
 #if FTS_AUTO_UPGRADE_EN
 	fts_fwupg_exit(ts_data);
+#endif
+
+#if FTS_TEST_EN
+	fts_test_exit(client);
 #endif
 
 #if FTS_ESDCHECK_EN
