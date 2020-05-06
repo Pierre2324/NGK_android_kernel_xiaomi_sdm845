@@ -2134,7 +2134,7 @@ static int32_t nvt_ts_resume(struct device *dev)
 #endif
 
 	// need to uncomment the following code for NT36672, NT36772 IC due to no boot-load when RESX/TP_RESX
-	//nvt_bootloader_reset();
+	nvt_bootloader_reset();
 	if (nvt_check_fw_reset_state(RESET_STATE_REK)) {
 		NVT_ERR("FW is not ready! Try to bootloader reset...\n");
 		nvt_bootloader_reset();
