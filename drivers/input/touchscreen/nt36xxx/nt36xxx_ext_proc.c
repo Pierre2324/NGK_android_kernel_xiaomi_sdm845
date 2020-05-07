@@ -373,9 +373,8 @@ return:
 *******************************************************/
 static int32_t nvt_fw_version_open(struct inode *inode, struct file *file)
 {
-	if (mutex_lock_interruptible(&ts->lock)) {
+	if (mutex_lock_interruptible(&ts->lock))
 		return -ERESTARTSYS;
-	}
 
 	NVT_LOG("++\n");
 
@@ -412,9 +411,8 @@ return:
 *******************************************************/
 static int32_t nvt_baseline_open(struct inode *inode, struct file *file)
 {
-	if (mutex_lock_interruptible(&ts->lock)) {
+	if (mutex_lock_interruptible(&ts->lock))
 		return -ERESTARTSYS;
-	}
 
 	NVT_LOG("++\n");
 
@@ -467,9 +465,8 @@ return:
 *******************************************************/
 static int32_t nvt_raw_open(struct inode *inode, struct file *file)
 {
-	if (mutex_lock_interruptible(&ts->lock)) {
+	if (mutex_lock_interruptible(&ts->lock))
 		return -ERESTARTSYS;
-	}
 
 	NVT_LOG("++\n");
 
@@ -525,9 +522,8 @@ return:
 *******************************************************/
 static int32_t nvt_diff_open(struct inode *inode, struct file *file)
 {
-	if (mutex_lock_interruptible(&ts->lock)) {
+	if (mutex_lock_interruptible(&ts->lock))
 		return -ERESTARTSYS;
-	}
 
 	NVT_LOG("++\n");
 
@@ -587,9 +583,8 @@ static int32_t nvt_xiaomi_config_info_open(struct inode *inode, struct file *fil
 {
 	uint8_t buf[16] = {0};
 
-	if (mutex_lock_interruptible(&ts->lock)) {
+	if (mutex_lock_interruptible(&ts->lock))
 		return -ERESTARTSYS;
-	}
 
 	NVT_LOG("++\n");
 
@@ -654,15 +649,13 @@ get_oem_data_retry:
 
 	/* Step 1: Initial BootLoader */
 	ret = Init_BootLoader();
-	if (ret < 0) {
+	if (ret < 0)
 		goto get_oem_data_out;
-	}
 
 	/* Step 2: Resume PD */
 	ret = Resume_PD();
-	if (ret < 0) {
+	if (ret < 0)
 		goto get_oem_data_out;
-	}
 
 	/* Step 3: Unlock */
 	buf[0] = 0x00;
@@ -710,9 +703,8 @@ get_oem_data_retry:
 		checksum_get = (uint16_t)((tmp_data[1] << 8) | tmp_data[0]);
 		/* calculate checksum of of the 256 bytes data read */
 		checksum_cal = (uint16_t)((cur_flash_addr >> 16) & 0xFF) + (uint16_t)((cur_flash_addr >> 8) & 0xFF) + (cur_flash_addr & 0xFF) + 0x00 + 0xFF;
-		for (j = 0; j < 256; j++) {
+		for (j = 0; j < 256; j++)
 			checksum_cal += tmp_data[j + 2];
-		}
 		checksum_cal = 65535 - checksum_cal + 1;
 		/*NVT_LOG("checksum_get = 0x%04X, checksum_cal = 0x%04X\n", checksum_get, checksum_cal);*/
 		/* compare the checksum got and calculated */
@@ -728,21 +720,11 @@ get_oem_data_retry:
 		}
 
 		/* Step 6: Remapping (Remove 2 Bytes Checksum) */
-		if ((i + 1) * 256 > size) {
+		if ((i + 1) * 256 > size)
 			memcpy(data + i * 256, tmp_data + 2, size - i * 256);
-		} else {
+		else
 			memcpy(data + i * 256, tmp_data + 2, 256);
-		}
 	}
-
-#if 0 /* for debug */
-	for (i = 0; i < size; i++) {
-		if (i % 16 == 0)
-			printk("\n");
-		printk("%02X ", data[i]);
-	}
-	printk("\n");
-#endif
 
 get_oem_data_out:
 	nvt_bootloader_reset();
@@ -798,9 +780,8 @@ static int nvt_xiaomi_lockdown_info_show(struct seq_file *m, void *v)
 
 static int32_t nvt_xiaomi_lockdown_info_open(struct inode *inode, struct file *file)
 {
-	if (mutex_lock_interruptible(&ts->lock)) {
+	if (mutex_lock_interruptible(&ts->lock))
 		return -ERESTARTSYS;
-	}
 
 	NVT_LOG("++\n");
 
@@ -838,9 +819,8 @@ int32_t nvt_get_lockdown_info(char *lockdata)
 	if (!lockdata)
 		return -ENOMEM;
 
-	if (mutex_lock_interruptible(&ts->lock)) {
+	if (mutex_lock_interruptible(&ts->lock))
 		return -ERESTARTSYS;
-	}
 
 #if NVT_TOUCH_ESD_PROTECT
 	nvt_esd_check_enable(false);

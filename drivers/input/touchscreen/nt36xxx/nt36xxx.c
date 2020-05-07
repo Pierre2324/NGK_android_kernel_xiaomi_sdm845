@@ -19,16 +19,13 @@
  */
 #include <linux/kernel.h>
 #include <linux/module.h>
-//#include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>
 #include <linux/gpio.h>
 #include <linux/proc_fs.h>
-//#include <asm/uaccess.h>
 #include <linux/input/mt.h>
 #include <linux/of_gpio.h>
 #include <linux/of_irq.h>
-//#include <linux/slab.h>
 #include <linux/regulator/consumer.h>
 #include <linux/hwinfo.h>
 
@@ -787,35 +784,20 @@ static int nvt_parse_dt(struct device *dev)
 	ts->reset_tddi = of_get_named_gpio_flags(np, "novatek,reset-tddi", 0, NULL);
 	NVT_LOG("novatek,reset-tddi=%d\n", ts->reset_tddi);
 
-	retval = of_property_read_string(np, "novatek,vddio-reg-name", &name);
-	if (retval == -EINVAL)
-		ts->vddio_reg_name = NULL;
-	else if (retval < 0)
-		return -EINVAL;
-	else {
-		ts->vddio_reg_name = name;
-		NVT_LOG("vddio_reg_name = %s\n", name);
-	}
+	retval = of_property_read_string(np, "novatek,vddio-reg-name", &ts->vddio_reg_name);
+	if (retval < 0) {
+		NVT_LOG("Unable to read VDDIO Regulator, rc:%d\n");
+		return retval;
 
-	retval = of_property_read_string(np, "novatek,lab-reg-name", &name);
-	if (retval == -EINVAL)
-		ts->lab_reg_name = NULL;
-	else if (retval < 0)
-		return -EINVAL;
-	else {
-		ts->lab_reg_name = name;
-		NVT_LOG("lab_reg_name = %s\n", name);
-	}
+	retval = of_property_read_string(np, "novatek,lab-reg-name", &ts->lab_reg_name);
+	if (retval < 0) {
+		NVT_LOG("Unable to read LAB Regulator, rc:%d\n");
+		return retval;
 
-	retval = of_property_read_string(np, "novatek,ibb-reg-name", &name);
-	if (retval == -EINVAL)
-		ts->ibb_reg_name = NULL;
-	else if (retval < 0)
-		return -EINVAL;
-	else {
-		ts->ibb_reg_name = name;
-		NVT_LOG("ibb_reg_name = %s\n", name);
-	}
+	retval = of_property_read_string(np, "novatek,ibb-reg-name", &ts->ibb_reg_name);
+	if (retval < 0) {
+		NVT_LOG("Unable to read IBB Regulator, rc:%d\n");
+		return retval;
 
 	retval = of_property_read_u32(np, "novatek,config-array-size",
 				 (u32 *) &ts->config_array_size);
@@ -1662,12 +1644,9 @@ static int32_t nvt_ts_probe(struct i2c_client *client, const struct i2c_device_i
 		goto err_chipvertrim_failed;
 	}
 
-	//Pierre2324: CAF says no mutex, we'll see 
-	//mutex_lock(&ts->lock);
 	nvt_bootloader_reset();
 	nvt_check_fw_reset_state(RESET_STATE_INIT);
 	nvt_get_fw_info();
-	//Pierre2324 mutex_unlock(&ts->lock);
 
 	//---allocate input device---
 	ts->input_dev = input_allocate_device();
@@ -2223,13 +2202,6 @@ static struct of_device_id nvt_match_table[] = {
 	{ },
 };
 #endif
-/*
-static struct i2c_board_info __initdata nvt_i2c_boardinfo[] = {
-	{
-		I2C_BOARD_INFO(NVT_I2C_NAME, I2C_FW_Address),
-	},
-};
-*/
 
 static struct i2c_driver nvt_i2c_driver = {
 	.probe		= nvt_ts_probe,
@@ -2238,7 +2210,6 @@ static struct i2c_driver nvt_i2c_driver = {
 	.id_table	= nvt_ts_id,
 	.driver = {
 		.name	= NVT_I2C_NAME,
-		.owner	= THIS_MODULE,
 #ifdef CONFIG_OF
 		.of_match_table = nvt_match_table,
 #endif
