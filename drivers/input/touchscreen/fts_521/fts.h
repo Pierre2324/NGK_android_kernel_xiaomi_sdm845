@@ -284,6 +284,25 @@ struct fts_ts_info {
 	struct dentry *debugfs;
 #endif
 	bool lockdown_is_ok;
+	struct completion tp_reset_completion;
+	atomic_t system_is_resetting;
+	unsigned int fod_status;
+	struct proc_dir_entry *input_proc;
+	bool irq_status;
+#ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE
+#ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE_SENSOR
+	bool p_sensor_switch;
+	bool p_sensor_changed;
+
+	int palm_sensor_switch;
+	bool palm_sensor_changed;
+#endif
+#ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE_GAMEMODE
+	wait_queue_head_t wait_queue;
+#endif
+#endif
+	bool dev_pm_suspend;
+	struct completion dev_pm_suspend_completion;
 };
 
 struct fts_mode_switch {
