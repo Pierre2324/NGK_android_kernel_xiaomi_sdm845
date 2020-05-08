@@ -669,7 +669,6 @@ static int nvt_parse_dt(struct device *dev)
 	struct nvt_config_info *config_info;
 	int retval;
 	u32 temp_val;
-	const char *name;
 
 #if NVT_TOUCH_SUPPORT_HW_RST
 	ts->reset_gpio = of_get_named_gpio_flags(np, "novatek,reset-gpio", 0, &ts->reset_flags);
@@ -1078,7 +1077,7 @@ static irqreturn_t nvt_ts_work_func(int irq, void *data)
 	int32_t finger_cnt;
 
 #if WAKEUP_GESTURE
-	if (unlikely(bTouchIsAwake == 0) {
+	if (unlikely(bTouchIsAwake == 0)) {
 		pm_wakeup_event(&ts->input_dev->dev, 5000);
 	}
 #endif

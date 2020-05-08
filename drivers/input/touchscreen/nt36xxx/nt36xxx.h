@@ -232,15 +232,14 @@ extern int32_t nvt_get_lockdown_info(char *lockdata);
 /*******************************************************
 Description:
 	Novatek touchscreen i2c read function.
-
 return:
 	Executive outcomes. 2---succeed. -5---I/O error
 *******************************************************/
 static inline int32_t CTP_I2C_READ(struct i2c_client *client, uint16_t address, uint8_t *buf, uint16_t len)
 {
 	struct i2c_msg msgs[2];
-	int32_t ret;
-	int32_t retries;
+	int32_t ret = -1;
+	int32_t retries = 0;
 
 	mutex_lock(&ts->xbuf_lock);
 
@@ -254,34 +253,37 @@ static inline int32_t CTP_I2C_READ(struct i2c_client *client, uint16_t address, 
 	msgs[1].len   = len - 1;
 	msgs[1].buf   = ts->xbuf;
 
-	for (retries = 0; retries < 5; retries++) {
+	while (retries < 5) {
 		ret = i2c_transfer(client->adapter, msgs, 2);
-		if (likely(ret == 2))
-			return ret;
-
+		if (ret == 2)	break;
+		retries++;
 		msleep(20);
+		NVT_ERR("error, retry=%d\n", retries);
+	}
+
+	if (unlikely(retries == 5)) {
+		NVT_ERR("error, ret=%d\n", ret);
+		ret = -EIO;
 	}
 
 	memcpy(buf + 1, ts->xbuf, len - 1);
 
 	mutex_unlock(&ts->xbuf_lock);
 
-	NVT_ERR("i2c read error\n");
-	return -EIO;
+	return ret;
 }
 
 /*******************************************************
 Description:
 	Novatek touchscreen i2c write function.
-
 return:
 	Executive outcomes. 1---succeed. -5---I/O error
 *******************************************************/
 static inline int32_t CTP_I2C_WRITE(struct i2c_client *client, uint16_t address, uint8_t *buf, uint16_t len)
 {
 	struct i2c_msg msg;
-	int32_t ret;
-	int32_t retries;
+	int32_t ret = -1;
+	int32_t retries = 0;
 
 	mutex_lock(&ts->xbuf_lock);
 
@@ -291,18 +293,22 @@ static inline int32_t CTP_I2C_WRITE(struct i2c_client *client, uint16_t address,
 	memcpy(ts->xbuf, buf, len);
 	msg.buf   = ts->xbuf;
 
-	for (retries = 0; retries < 5; retries++) {
+	while (retries < 5) {
 		ret = i2c_transfer(client->adapter, &msg, 1);
-		if (likely(ret == 1))
-			return ret;
-
+		if (ret == 1)	break;
+		retries++;
 		msleep(20);
+		NVT_ERR("error, retry=%d\n", retries);
+	}
+
+	if (unlikely(retries == 5)) {
+		NVT_ERR("error, ret=%d\n", ret);
+		ret = -EIO;
 	}
 
 	mutex_unlock(&ts->xbuf_lock);
 
-	NVT_ERR("i2c write error\n");
-	return -EIO;
+	return ret;
 }
 
 #endif /* _LINUX_NVT_TOUCH_H */
