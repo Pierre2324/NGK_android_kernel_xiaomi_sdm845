@@ -358,6 +358,7 @@ struct fts_ts_info {
 	struct completion tp_reset_completion;
 	atomic_t system_is_resetting;
 	unsigned int fod_status;
+	struct proc_dir_entry *input_proc;
 	bool irq_status;
 #ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE
 #ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE_SENSOR
