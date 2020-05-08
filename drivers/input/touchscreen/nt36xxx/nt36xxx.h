@@ -24,10 +24,6 @@
 #include <linux/input.h>
 #include <linux/uaccess.h>
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
-#include <linux/earlysuspend.h>
-#endif
-
 #include "nt36xxx_mem_map.h"
 
 #define PINCTRL_STATE_ACTIVE		"pmx_ts_active"
@@ -142,8 +138,6 @@ struct nvt_ts_data {
 	int8_t phys[32];
 #if defined(CONFIG_DRM)
 	struct notifier_block notifier;
-#elif defined(CONFIG_HAS_EARLYSUSPEND)
-	struct early_suspend early_suspend;
 #endif
 	uint8_t fw_ver;
 	uint8_t x_num;
