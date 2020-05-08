@@ -1516,6 +1516,7 @@ int __init of_parse_thermal_message(void)
 
 	tm = kzalloc(sizeof(struct thermal_message), GFP_KERNEL);
 	if (!tm) {
+		pr_err("unable alloc memory for thermal message\n");
 		ret = -ENOMEM;
 		goto out;
 	}
@@ -1549,7 +1550,8 @@ out:
 
 void free_thermal_message(void)
 {
-	kfree(tm);
-	if (tm)
+	if (tm) {
+		kfree(tm);
 		tm = NULL;
+	}
 }
