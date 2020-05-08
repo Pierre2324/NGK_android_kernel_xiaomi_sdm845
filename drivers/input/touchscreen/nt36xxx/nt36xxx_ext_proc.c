@@ -144,11 +144,6 @@ void nvt_read_mdata(uint32_t xdata_addr, uint32_t xdata_btn_addr)
 	data_len = ts->x_num * ts->y_num * 2;
 	residual_len = (head_addr + dummy_len + data_len) % XDATA_SECTOR_SIZE;
 
-	//Pierre2324: CAF says no lock
-	//mutex_lock(&ts->mdata_lock);
-
-	//printk("head_addr=0x%05X, dummy_len=0x%05X, data_len=0x%05X, residual_len=0x%05X\n", head_addr, dummy_len, data_len, residual_len);
-
 	//read xdata : step 1
 	for (i = 0; i < ((dummy_len + data_len) / XDATA_SECTOR_SIZE); i++) {
 		//---change xdata index---
@@ -157,18 +152,14 @@ void nvt_read_mdata(uint32_t xdata_addr, uint32_t xdata_btn_addr)
 		//---read xdata by BUS_TRANSFER_LENGTH
 		for (j = 0; j < (XDATA_SECTOR_SIZE / BUS_TRANSFER_LENGTH); j++) {
 			//---read data---
-			//Pierre2324: CAF says no wait 			
-			//msleep(15);
 			buf[0] = BUS_TRANSFER_LENGTH * j;
 			CTP_I2C_READ(ts->client, I2C_FW_Address, buf, BUS_TRANSFER_LENGTH + 1);
 
 			//---copy buf to xdata_tmp---
 			for (k = 0; k < BUS_TRANSFER_LENGTH; k++) {
 				xdata_tmp[XDATA_SECTOR_SIZE * i + BUS_TRANSFER_LENGTH * j + k] = buf[k + 1];
-				//printk("0x%02X, 0x%04X\n", buf[k+1], (XDATA_SECTOR_SIZE*i + BUS_TRANSFER_LENGTH*j + k));
 			}
 		}
-		//printk("addr=0x%05X\n", (head_addr+XDATA_SECTOR_SIZE*i));
 	}
 
 	//read xdata : step2
@@ -179,18 +170,14 @@ void nvt_read_mdata(uint32_t xdata_addr, uint32_t xdata_btn_addr)
 		//---read xdata by BUS_TRANSFER_LENGTH
 		for (j = 0; j < (residual_len / BUS_TRANSFER_LENGTH + 1); j++) {
 			//---read data---
-			//Pierre2324: CAF says no wait
-			//msleep(15);
 			buf[0] = BUS_TRANSFER_LENGTH * j;
 			CTP_I2C_READ(ts->client, I2C_FW_Address, buf, BUS_TRANSFER_LENGTH + 1);
 
 			//---copy buf to xdata_tmp---
 			for (k = 0; k < BUS_TRANSFER_LENGTH; k++) {
 				xdata_tmp[(dummy_len + data_len - residual_len) + BUS_TRANSFER_LENGTH * j + k] = buf[k + 1];
-				//printk("0x%02X, 0x%04x\n", buf[k+1], ((dummy_len+data_len-residual_len) + BUS_TRANSFER_LENGTH*j + k));
 			}
 		}
-		//printk("addr=0x%05X\n", (xdata_addr+data_len-residual_len));
 	}
 
 	//---remove dummy data and 2bytes-to-1data---
@@ -212,9 +199,6 @@ void nvt_read_mdata(uint32_t xdata_addr, uint32_t xdata_btn_addr)
 		xdata[ts->x_num * ts->y_num + i] = (int16_t)(buf[1 + i * 2] + 256 * buf[1 + i * 2 + 1]);
 	}
 #endif
-	//Pierre2324:
-	//mutex_unlock(&ts->mdata_lock);
-
 	//---set xdata index to EVENT BUF ADDR---
 	nvt_set_page(I2C_FW_Address, ts->mmap->EVENT_BUF_ADDR);
 }
@@ -256,10 +240,7 @@ void nvt_get_mdata(int32_t *buf, uint8_t *m_x_num, uint8_t *m_y_num)
     *m_x_num = ts->x_num;
     *m_y_num = ts->y_num;
 
-	//Pierre2324: CAF says no lock
-	//mutex_lock(&ts->mdata_lock);
 	memcpy(buf, xdata, ((ts->x_num * ts->y_num + TOUCH_KEY_NUM) * sizeof(int32_t)));
-	//mutex_unlock(&ts->mdata_lock);
 }
 
 /*******************************************************
