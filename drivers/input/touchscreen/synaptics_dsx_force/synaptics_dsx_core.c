@@ -229,10 +229,10 @@ static ssize_t synaptics_rmi4_0dbutton_store(struct device *dev,
 static ssize_t synaptics_rmi4_suspend_store(struct device *dev,
 		struct device_attribute *attr, const char *buf, size_t count);
 
-static ssize_t synaptics_rmi4_wake_gesture_show(struct device *dev,
+static ssize_t synaptics_rmi4_gesture_enable_show(struct device *dev,
 		struct device_attribute *attr, char *buf);
 
-static ssize_t synaptics_rmi4_wake_gesture_store(struct device *dev,
+static ssize_t synaptics_rmi4_gesture_enable_store(struct device *dev,
 		struct device_attribute *attr, const char *buf, size_t count);
 
 static ssize_t synaptics_rmi4_irq_enable_show(struct device *dev,
@@ -764,9 +764,9 @@ static struct device_attribute attrs[] = {
 	__ATTR(suspend, S_IWUSR,
 			synaptics_rmi4_show_error,
 			synaptics_rmi4_suspend_store),
-	__ATTR(wake_gesture, (S_IRUGO | S_IWUSR),
-			synaptics_rmi4_wake_gesture_show,
-			synaptics_rmi4_wake_gesture_store),
+	__ATTR(gesture_enable, (S_IRUGO | S_IWUSR),
+			synaptics_rmi4_gesture_enable_show,
+			synaptics_rmi4_gesture_enable_store),
 	__ATTR(irq_enable, (S_IRUGO | S_IWUSR),
 			synaptics_rmi4_irq_enable_show,
 			synaptics_rmi4_irq_enable_store),
@@ -1161,7 +1161,7 @@ static ssize_t synaptics_rmi4_suspend_store(struct device *dev,
 	return count;
 }
 
-static ssize_t synaptics_rmi4_wake_gesture_show(struct device *dev,
+static ssize_t synaptics_rmi4_gesture_enable_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {
 	struct synaptics_rmi4_data *rmi4_data = dev_get_drvdata(dev);
@@ -1170,7 +1170,7 @@ static ssize_t synaptics_rmi4_wake_gesture_show(struct device *dev,
 			rmi4_data->enable_wakeup_gesture);
 }
 
-static ssize_t synaptics_rmi4_wake_gesture_store(struct device *dev,
+static ssize_t synaptics_rmi4_gesture_enable_store(struct device *dev,
 		struct device_attribute *attr, const char *buf, size_t count)
 {
 	unsigned int input;

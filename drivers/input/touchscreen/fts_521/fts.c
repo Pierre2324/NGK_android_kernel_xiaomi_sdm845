@@ -2261,7 +2261,7 @@ static ssize_t fts_fod_status_store(struct device *dev,
 	return count;
 }
 
-static ssize_t fts_wake_gesture_store(struct device *dev,
+static ssize_t fts_gesture_enable_store(struct device *dev,
 					struct device_attribute *attr,
 					const char *buf, size_t count)
 {
@@ -3065,8 +3065,8 @@ static ssize_t fts_grip_area_store(struct device *dev,
 }
 #endif
 
-static DEVICE_ATTR(wake_gesture, (S_IRUGO | S_IWUSR),
-		   fts_gesture_mask_show, fts_wake_gesture_store);
+static DEVICE_ATTR(gesture_enable, (S_IRUGO | S_IWUSR),
+		   fts_gesture_mask_show, fts_gesture_enable_store);
 static DEVICE_ATTR(fts_lockdown, (S_IRUGO | S_IWUSR | S_IWGRP),
 		   fts_lockdown_show, fts_lockdown_store);
 static DEVICE_ATTR(fwupdate, (S_IRUGO | S_IWUSR | S_IWGRP), fts_fwupdate_show,
@@ -3174,7 +3174,7 @@ static struct attribute *fts_attr_group[] = {
 	&dev_attr_doze_time.attr,
 	&dev_attr_grip_enable.attr,
 	&dev_attr_grip_area.attr,
-	&dev_attr_wake_gesture.attr,
+	&dev_attr_gesture_enable.attr,
 #ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE_GAMEMODE
 	&dev_attr_touchgame.attr,
 #endif
