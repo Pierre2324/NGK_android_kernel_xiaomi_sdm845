@@ -216,9 +216,6 @@ typedef enum {
 //---extern structures---
 extern struct nvt_ts_data *ts;
 
-//----kmem cache------
-extern struct kmem_cache *kmem_ts_data_pool;
-
 //---extern functions---
 extern void nvt_bootloader_reset(void);
 extern void nvt_sw_reset_idle(void);
