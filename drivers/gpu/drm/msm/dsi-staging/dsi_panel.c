@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
- * Copyright (C) 2018 XiaoMi, Inc.
+ * Copyright (C) 2018-2019 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -1190,9 +1190,11 @@ int dsi_panel_enable_doze_backlight(struct dsi_panel *panel, u32 bl_lvl)
 
 	if (bl->doze_brightness_varible_flag) {
 		if (bl_lvl == 0 && panel->bl_config.bl_remap_flag
-				&& panel->bl_config.brightness_max_level && panel->bl_config.bl_max_level) {
-			bl_temp = (panel->bl_config.bl_max_level - panel->bl_config.bl_min_level) * bl_lvl / panel->bl_config.brightness_max_level
-						+ panel->bl_config.bl_min_level;
+				&& panel->bl_config.brightness_max_level
+				&& panel->bl_config.bl_max_level) {
+			bl_temp = (panel->bl_config.bl_max_level - panel->bl_config.bl_min_level)
+					* bl_lvl / panel->bl_config.brightness_max_level
+					+ panel->bl_config.bl_min_level;
 			rc = dsi_panel_update_backlight(panel, bl_temp);
 		}
 	} else {
@@ -1235,18 +1237,21 @@ int dsi_panel_set_backlight(struct dsi_panel *panel, u32 bl_lvl)
 		 * y = kx+b;
 		 */
 		if (bl_lvl == 0)
-			bl_temp = (panel->bl_config.bl_max_level - panel->bl_config.bl_min_level) * bl_lvl / panel->bl_config.brightness_max_level
-						+ panel->bl_config.bl_min_level;
+			bl_temp = (panel->bl_config.bl_max_level - panel->bl_config.bl_min_level)
+					* bl_lvl / panel->bl_config.brightness_max_level
+					+ panel->bl_config.bl_min_level;
 		else
-			bl_temp = (panel->bl_config.bl_max_level - panel->bl_config.bl_typical_level) * bl_lvl / panel->bl_config.brightness_max_level
-						+ panel->bl_config.bl_typical_level;
+			bl_temp = (panel->bl_config.bl_max_level - panel->bl_config.bl_typical_level)
+					* bl_lvl / panel->bl_config.brightness_max_level
+					+ panel->bl_config.bl_typical_level;
 	} else {
 		bl_temp = bl_lvl;
 	}
 
 	pr_debug("backlight type:%d lvl:%d\n", bl->type, bl_temp);
 	if (panel->dc_enable && bl_temp < panel->dc_threshold && bl_temp != 0) {
-		pr_info("skip set backlight bacase dc enable %d, bl %d, last_bl %d\n", panel->dc_enable, bl_temp, panel->last_bl_lvl);
+		pr_info("skip set backlight bacase dc enable %d, bl %d, last_bl %d\n",
+				panel->dc_enable, bl_temp, panel->last_bl_lvl);
 		mutex_unlock(&panel->panel_lock);
 		return rc;
 	}
@@ -2791,6 +2796,8 @@ static int dsi_panel_parse_bl_config(struct dsi_panel *panel,
 			 panel->name, bl_type);
 		panel->bl_config.type = DSI_BACKLIGHT_UNKNOWN;
 	}
+	panel->bl_config.dcs_type_ss = of_property_read_bool(of_node,
+						"qcom,mdss-dsi-bl-dcs-type-ss");
 
 	data = of_get_property(of_node, "qcom,bl-update-flag", NULL);
 	if (!data) {
@@ -2810,20 +2817,6 @@ static int dsi_panel_parse_bl_config(struct dsi_panel *panel,
 		panel->bl_config.bl_update_delay = 0;
 	} else {
 		panel->bl_config.bl_update_delay = val;
-	}
-
-	panel->bl_config.dcs_type_ss = of_property_read_bool(of_node,
-						"qcom,mdss-dsi-bl-dcs-type-ss");
-
-	data = of_get_property(of_node, "qcom,bl-update-flag", NULL);
-	if (!data) {
-		panel->bl_config.bl_update = BL_UPDATE_NONE;
-	} else if (!strcmp(data, "delay_until_first_frame")) {
-		panel->bl_config.bl_update = BL_UPDATE_DELAY_UNTIL_FIRST_FRAME;
-	} else {
-		pr_debug("[%s] No valid bl-update-flag: %s\n",
-						panel->name, data);
-		panel->bl_config.bl_update = BL_UPDATE_NONE;
 	}
 
 	panel->bl_config.bl_scale = MAX_BL_SCALE_LEVEL;
@@ -3910,6 +3903,15 @@ static int dsi_panel_parse_mi_config(struct dsi_panel *panel,
 		pr_info("dc backlight threshold %d \n", panel->dc_threshold);
 	}
 
+	rc = of_property_read_u32(of_node,
+			"qcom,mdss-dsi-panel-dc-threshold", &panel->dc_threshold);
+	if (rc) {
+		panel->dc_threshold = 320;
+		pr_info("default dc backlight threshold is %d\n", panel->dc_threshold);
+	} else {
+		pr_info("dc backlight threshold %d \n", panel->dc_threshold);
+	}
+
 	INIT_DELAYED_WORK(&panel->cmds_work, panelon_dimming_enable_delayed_work);
 
 	panel->dsi_panel_off_mode = false;
@@ -4874,8 +4876,8 @@ int panel_disp_param_send_lock(struct dsi_panel *panel, int param)
 		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_DIMMINGOFF);
 		break;
 	case PANEL_DIMMING_ON_CMD:
-		pr_debug("dimmingon\n");
-		if (panel->skip_dimmingon != STATE_DIM_BLOCK) {
+		pr_info("dimmingon\n");
+		if (panel->skip_dimmingon != STATE_DIM_BLOCK && !panel->in_aod) {
 			if (ktime_after(ktime_get(), panel->fod_hbm_off_time)) {
 				dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_DIMMINGON);
 			} else {
@@ -5222,12 +5224,12 @@ int dsi_panel_enable(struct dsi_panel *panel)
 	panel->in_aod = false;
 
 	mutex_unlock(&panel->panel_lock);
-
-	pr_debug("[LCD] %s: DSI_CMD_SET_ON\n", __func__);
+	
+	pr_info("[LCD] %s: DSI_CMD_SET_ON\n", __func__);
 
 	if (panel->onoff_mode_enabled) {
 		set_skip_panel_dead(false);
-		pr_debug("%s: set set_skip_panel_dead = false\n", __func__);
+		pr_debug("%s: set set_skip_panel_dead = false \n", __func__);
 	}
 
 	return rc;
