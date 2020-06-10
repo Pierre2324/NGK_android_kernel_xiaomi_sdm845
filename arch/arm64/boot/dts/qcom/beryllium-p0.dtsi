@@ -133,9 +133,9 @@
 	};
 
 	thermal-message {
-		thermal,batt-array-size = "13";
-		thermal,batt-level-screen-on = "0 2 4 6 8 9 10 11 12 13 14 14 16";
-		thermal,batt-level-screen-off = "0 1 1 1 3 5 6 6 6 7 9 14 16";
+		thermal,batt-array-size = "26";
+		thermal,batt-level-screen-on = "0 0 0 0 1 1 2 3 4 5 6 7 8 0 0 0 0 1 1 2 3 4 5 6 7 8";
+		thermal,batt-level-screen-off = "0 0 0 0 1 1 2 3 4 5 6 7 8 0 0 0 0 1 1 2 3 4 5 6 7 8";
 	};
 };
 
@@ -298,14 +298,13 @@
 };
 
 &pmi8998_charger {
-	qcom,usb-icl-ua = <2800000>;
-	qcom,fcc-max-ua = <3300000>;
-	qcom,fcc-low-temp-delta = <2970000>;
-	qcom,fcc-hot-temp-delta = <1650000>;
-	qcom,fcc-cool-temp-delta = <2310000>;
+	qcom,usb-icl-ua = <3000000>;
+	qcom,fcc-max-ua = <2800000>;
+	qcom,fcc-low-temp-delta = <2520000>;
+	qcom,fcc-hot-temp-delta = <1400000>;
+	qcom,fcc-cool-temp-delta = <1960000>;
 	qcom,auto-recharge-soc;
-	qcom,sw-jeita-enable;
-	qcom,dynamic-fv-enable;
+        qcom,sw-jeita-enable;
 	qcom,thermal-mitigation
 				= <1800000 1600000 1400000 1200000 1000000 1000000 1000000>;
 	qcom,thermal-mitigation-dcp
@@ -313,7 +312,7 @@
 				   1800000 1800000 1800000 1800000 1800000 1600000 1400000
 				   1200000 1000000>;
 	qcom,thermal-mitigation-qc3
-				= <2800000 2725000 2575000 2425000 2275000 2125000 2000000
+				= <3000000 2725000 2575000 2425000 2275000 2125000 2000000
 				   1800000 1650000 1500000 1360000 1200000 1060000 900000
 				   752500 525000>;
 	qcom,thermal-mitigation-qc2
@@ -340,8 +339,6 @@
 	qcom,fg-esr-clamp-mohms = <60>;
 	qcom,fg-batt-temp-delta = <6>;
 	qcom,battery-data = <&mtp_batterydata>;
-	qcom,slope-limit-temp-threshold = <100>;
-	qcom,slope-limit-coeffs = <10 11 12 13>;
 };
 
 &pmi8998_pwm_1 {
@@ -752,12 +749,6 @@
 	type = "passive";
 };
 
-&ibat_high {
-	temperature = <5000>;
-	hysteresis = <200>;
-	type = "passive";
-};
-
 &thermal_zones {
 	vbat {
 		polling-delay-passive = <100>;
@@ -807,33 +798,6 @@
 			};
 			soc_map7 {
 				trip = <&low_soc>;
-				cooling-device =
-					<&CPU7 18 18>;
-			};
-		};
-	};
-
-	ibat-high {
-		polling-delay-passive = <100>;
-
-		cooling-maps {
-			ibat_cpu4 {
-				trip = <&ibat_high>;
-				cooling-device =
-					<&CPU4 18 18>;
-			};
-			ibat_cpu5 {
-				trip = <&ibat_high>;
-				cooling-device =
-					<&CPU5 18 18>;
-			};
-			ibat_cpu6 {
-				trip = <&ibat_high>;
-				cooling-device =
-					<&CPU6 18 18>;
-			};
-			ibat_cpu7 {
-				trip = <&ibat_high>;
 				cooling-device =
 					<&CPU7 18 18>;
 			};
