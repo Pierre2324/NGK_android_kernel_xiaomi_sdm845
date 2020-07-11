@@ -254,8 +254,10 @@ SUBARCH := $(shell uname -m | sed -e s/i.86/x86/ -e s/x86_64/x86/ \
 # "make" in the configured kernel build directory always uses that.
 # Default value for CROSS_COMPILE is not to prefix executables
 # Note: Some architectures assign CROSS_COMPILE in their arch/*/Makefile
-ARCH		?= $(SUBARCH)
-CROSS_COMPILE	?= $(CONFIG_CROSS_COMPILE:"%"=%)
+override ARCH		:= arm64
+override CROSS_COMPILE	:= /media/pierre/Expension/Android/PocophoneF1/Kernels/Proton-Clang/bin/aarch64-linux-gnu-
+override CROSS_COMPILE_ARM32	:= /media/pierre/Expension/Android/PocophoneF1/Kernels/Proton-Clang/bin/arm-linux-gnueabi-
+
 
 # Architecture as present in compile.h
 UTS_MACHINE 	:= $(ARCH)
@@ -303,8 +305,9 @@ CONFIG_SHELL := $(shell if [ -x "$$BASH" ]; then echo $$BASH; \
 
 HOSTCC       = gcc
 HOSTCXX      = g++
-HOSTCFLAGS   := -Wall -Wmissing-prototypes -Wstrict-prototypes -O2 -fomit-frame-pointer -std=gnu89
-HOSTCXXFLAGS = -O2
+HOSTCFLAGS   := -Wall -Wmissing-prototypes -Wstrict-prototypes -O3 -fomit-frame-pointer -std=gnu89 -pipe -fforce-addr 
+
+HOSTCXXFLAGS = -O3
 
 ifeq ($(shell $(HOSTCC) -v 2>&1 | grep -c "clang version"), 1)
 HOSTCFLAGS  += -Wno-unused-value -Wno-unused-parameter \
@@ -390,11 +393,21 @@ LINUXINCLUDE    := \
 LINUXINCLUDE	+= $(filter-out $(LINUXINCLUDE),$(USERINCLUDE))
 
 KBUILD_AFLAGS   := -D__ASSEMBLY__
-KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
+KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs -pipe \
 		   -fno-strict-aliasing -fno-common -fshort-wchar \
 		   -Werror-implicit-function-declaration \
 		   -Wno-format-security \
-		   -std=gnu89
+#00		   -ffast-math -march=armv8.3-a+crypto -mcpu=cortex-a55 -mtune=cortex-a55 \
+#00		   -std=gnu89 \
+#00		   -mllvm -polly \
+#00		   -mllvm -polly-run-dce \
+#00		   -mllvm -polly-run-inliner \
+#00		   -mllvm -polly-opt-fusion=max \
+#00		   -mllvm -polly-ast-use-context \
+#00		   -mllvm -polly-vectorizer=stripmine \
+#00		   -mllvm -polly-detect-keep-going \
+#00		   -mllvm -polly-invariant-load-hoisting
+		   
 KBUILD_CPPFLAGS := -D__KERNEL__
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
@@ -654,11 +667,14 @@ ifdef CONFIG_LTO_CLANG
 LDFINAL_vmlinux := $(LD)
 LD		:= $(LDGOLD)
 LDFLAGS		+= -plugin LLVMgold.so
+LDFLAGS		+= -plugin-opt=mcpu=kryo
 # use llvm-ar for building symbol tables from IR files, and llvm-dis instead
 # of objdump for processing symbol versions and exports
 LLVM_AR		:= llvm-ar
 LLVM_DIS	:= llvm-dis
 export LLVM_AR LLVM_DIS
+# Set O3 optimization level for LTO
+LDFLAGS		+= --plugin-opt=O3
 endif
 
 # The arch Makefile can set ARCH_{CPP,A,C}FLAGS to override the default
@@ -731,8 +747,30 @@ endif
 ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
 KBUILD_CFLAGS   += -Os
 else
-KBUILD_CFLAGS   += -O2
+KBUILD_CFLAGS   += -O3
 endif
+
+KBUILD_CFLAGS	+= -O3 -mtune=cortex-a55 -mcpu=cortex-a55+crc+crypto+fp16+simd+sve \
+-fomit-frame-pointer -pipe \
+-funroll-loops \
+-ftree-vectorize \
+-fforce-addr \
+##-ftree-loop-vectorize \
+##-Wno-attribute-alias 
+
+#-floop-nest-optimize -fprefetch-loop-arrays 
+#KBUILD_CFLAGS	+= -fno-gcse  
+#KBUILD_CFLAGS	+= -floop-strip-mine -floop-block
+#KBUILD_CFLAGS	+= -floop-optimize -ftree-vectorize -ftracer
+LDFLAGS		+= -O3
+LDFLAGS += -fuse-ld=gold
+KBUILD_CFLAGS	+= $(call cc-option,-mabi=lp64)
+KBUILD_AFLAGS	+= $(call cc-option,-mabi=lp64)
+
+# This doesn't need 835769/843419 erratum fixes.
+# Some toolchains enable those fixes automatically, so opt-out.
+KBUILD_CFLAGS	+= $(call cc-option, -mno-fix-cortex-a53-835769)
+KBUILD_CFLAGS	+= $(call cc-option, -mno-fix-cortex-a53-843419)
 
 ifdef CONFIG_CC_WERROR
 KBUILD_CFLAGS	+= -Werror
