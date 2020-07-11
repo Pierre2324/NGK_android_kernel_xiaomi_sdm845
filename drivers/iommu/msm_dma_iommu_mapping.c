@@ -86,7 +86,6 @@ int msm_dma_map_sg_attrs(struct device *dev, struct scatterlist *sg, int nents,
 	mutex_unlock(&dev->iommu_map_lock);
 
 	return nents;
->>>>>>> 95f520fce4cd... iommu: msm: Rewrite to improve clarity and performance
 }
 
 void msm_dma_unmap_sg(struct device *dev, struct scatterlist *sg, int nents,
