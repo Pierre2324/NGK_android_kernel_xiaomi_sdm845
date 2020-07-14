@@ -14,3 +14,4 @@ obj-$(CONFIG_TOUCHSCREEN_FTS)   +=  focaltech_point_report_check.o
 obj-$(CONFIG_TOUCHSCREEN_FTS)   +=  focaltech_flash/
 obj-$(CONFIG_TOUCHSCREEN_FTS_FT8719)   +=  focaltech_test/
 obj-$(CONFIG_TOUCHSCREEN_FTS_FT3518)   +=  focaltech_test_ft3518/
+

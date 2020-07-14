@@ -1,4 +1,3 @@
-
 /*
  * Copyright (C) 2010 - 2018 Novatek, Inc.
  * Copyright (C) 2019 XiaoMi, Inc.
@@ -1004,7 +1003,6 @@ static void mi_switch_mode_work(struct work_struct *work)
 	);
 	struct nvt_ts_data *data = ms->nvt_data;
 	unsigned char value = ms->mode;
-	char ch[64] = {0x0,};
 
 	if (value >= EVENT_WAKEUP_MODE_OFF &&
 		value <= EVENT_WAKEUP_MODE_ON)
@@ -1096,13 +1094,6 @@ static irqreturn_t nvt_ts_work_func(int irq, void *data)
 	if (nvt_fw_recovery(point_data)) {
 		goto XFER_ERROR;
 	}
-
-#if NVT_TOUCH_ESD_PROTECT
-	if (nvt_fw_recovery(point_data)) {
-		nvt_esd_check_enable(true);
-		goto XFER_ERROR;
-	}
-#endif /* #if NVT_TOUCH_ESD_PROTECT */
 
 #if WAKEUP_GESTURE
 	if (unlikely(bTouchIsAwake == 0)) {

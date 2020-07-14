@@ -1688,31 +1688,41 @@ static int fts_fwupg_get_fw_file(struct fts_ts_data *ts_data)
 {
 	struct upgrade_fw *fw = &fw_list[0];
 	struct fts_upgrade *upg = fwupgrade;
-
-#if (FTS_GET_VENDOR_ID_NUM > 1)
-	int ret = 0;
 	int i = 0;
+	int len = 0;
+#ifdef FW_UPDATE_BY_VENDOR_ID
+	int ret = 0;
 	u16 vendor_id = 0;
+#endif
 
 	/* support multi vendor, must read correct vendor id */
+#ifdef FW_UPDATE_BY_VENDOR_ID
 	ret = fts_fwupg_get_vendorid(ts_data, &vendor_id);
 	if (ret < 0) {
 		FTS_ERROR("get vendor id failed");
 		return ret;
 	}
 	FTS_INFO("success to read vendor id:%04x", vendor_id);
-	for (i = 0; i < FTS_GET_VENDOR_ID_NUM; i++) {
+#endif
+	for (i = 0; i < sizeof(fw_list)/sizeof(fw_list[0]); i++) {
 		fw = &fw_list[i];
-		if (vendor_id == fw->vendor_id) {
+		len = strlen(ts_data->pdata->project_name) > strlen(fw->project_name) ? strlen(ts_data->pdata->project_name) : strlen(fw->project_name);
+#ifdef FW_UPDATE_BY_VENDOR_ID
+		if (ts_data->pdata->project_name && !strncmp(ts_data->pdata->project_name, fw->project_name, len) && vendor_id == fw->vendor_id) {
+			FTS_INFO("project id and vendor id match, get fw file successfully");
+			break;
+		}
+#else
+		if (ts_data->pdata->project_name && !strncmp(ts_data->pdata->project_name, fw->project_name, strlen(ts_data->pdata->project_name))) {
 			FTS_INFO("vendor id match, get fw file successfully");
 			break;
 		}
+#endif
 	}
-	if (i >= FTS_GET_VENDOR_ID_NUM) {
-		FTS_ERROR("no vendor id match, don't get file");
+	if (i >= sizeof(fw_list)/sizeof(fw_list[0])) {
+		FTS_ERROR("no vendor id or project id match, don't get file");
 		return -ENODATA;
 	}
-#endif
 
 	if (upg) {
 		upg->fw = fw->fw_file;
@@ -1779,12 +1789,11 @@ static void fts_fwupg_work(struct work_struct *work)
 
 static int fts_get_lockdown_info(struct fts_ts_data *ts_data)
 {
-	int i, ret;
+	int i, ret = -EINVAL;
 	char buf[128];
 
 	memset(ts_data->lockdown_info, 0x00, FTS_LOCKDOWN_INFO_SIZE);
-
-	ret = fts_flash_read(ts_data->client, LOCKDOWN_INFO_ADDR, ts_data->lockdown_info, FTS_LOCKDOWN_INFO_SIZE);
+	ret = fts_flash_read(ts_data->client, ts_data->pdata->lockdown_info_addr, ts_data->lockdown_info, FTS_LOCKDOWN_INFO_SIZE);
 	if (ret < 0) {
 		FTS_ERROR("fail to get lockdown info");
 		return ret;

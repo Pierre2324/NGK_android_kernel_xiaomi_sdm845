@@ -730,6 +730,7 @@ struct mxt_data {
 	u8 config_info[MXT_CONFIG_INFO_SIZE];
 	u8 is_usb_plug_in;
 
+	int dbclick_count;
 	bool is_suspend;
 	struct mutex ts_lock;
 	/* Slowscan parameters	*/
@@ -6750,7 +6751,6 @@ static int mxt_probe(struct i2c_client *client,
 	mxt_debugfs_init(data);
 
 	normal_mode_reg_save(data);
-	update_hardware_info(TYPE_TOUCH, 2);
 	data->finish_init = 1;
 
 	proc_create("tp_selftest", 0664, NULL, &mxt_selftest_ops);
