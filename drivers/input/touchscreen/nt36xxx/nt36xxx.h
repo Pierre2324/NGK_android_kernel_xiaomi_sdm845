@@ -23,6 +23,7 @@
 #include <linux/i2c.h>
 #include <linux/input.h>
 #include <linux/uaccess.h>
+#include <linux/pm_qos.h>
 
 #include "nt36xxx_mem_map.h"
 
@@ -173,13 +174,13 @@ struct nvt_ts_data {
 	struct workqueue_struct *event_wq;
 	struct completion dev_pm_suspend_completion;
 	struct proc_dir_entry *input_proc;
+	struct pm_qos_request pm_qos_req;
 #ifdef NVT_TOUCH_COUNT_DUMP
 	struct class *nvt_tp_class;
 	struct device *nvt_touch_dev;
 	bool dump_click_count;
 	char *current_clicknum_file;
 #endif
-
 };
 
 #if WAKEUP_GESTURE
