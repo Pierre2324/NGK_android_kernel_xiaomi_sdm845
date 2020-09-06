@@ -24121,7 +24121,6 @@ extract_roam_11kv_stats_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	if (!dst->num_freq || !param_buf->num_roam_neighbor_report_chan_info ||
 	    rpt_idx >= param_buf->num_roam_neighbor_report_chan_info)
 		return QDF_STATUS_SUCCESS;
-	}
 
 	if (!param_buf->roam_neighbor_report_chan_info) {
 		WMI_LOGD("%s: 11kv channel present, but TLV is NULL num_freq:%d",

@@ -11362,18 +11362,6 @@ typedef enum {
      */
     WMI_VDEV_PARAM_ENABLE_DISABLE_NAN_CONFIG_FEATURES,  /* 0xA3 */
 
-    /*
-     * Parameter used to control roaming/11kv (BTM) / etc. behavior
-     * bit    | purpose
-     * -----------------
-     * 0      | Disable any FW side roaming except host invoke roaming
-     * 1      | Do not trans away on receiving BTM req
-     * 2      | Do not send disassoc to AP when receiving BTM req with
-     *        | Disassoc Imminent bit set to 1
-     * 3 - 31 | Reserved
-     */
-    WMI_VDEV_PARAM_ROAM_11KV_CTRL,        /* 0xA2 */
-
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are
      * prone to change.
