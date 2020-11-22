@@ -133,9 +133,9 @@ $(obj)/config_data.gz: arch/arm64/configs/dipper_stock_defconfig FORCE
 else ifeq ($(CONFIG_MACH_XIAOMI_E10),y)
 $(obj)/config_data.gz: arch/arm64/configs/beryllium_stock_defconfig FORCE
 endif
-	$(call if_changed,gzip)
+$(call if_changed,gzip)
 
-      filechk_ikconfiggz = (echo "static const char kernel_config_data[] __used = MAGIC_START"; cat $< | scripts/basic/bin2c; echo "MAGIC_END;")
+filechk_ikconfiggz = (echo "static const char kernel_config_data[] __used = MAGIC_START"; cat $< | scripts/basic/bin2c; echo "MAGIC_END;")
 targets += config_data.h
 $(obj)/config_data.h: $(obj)/config_data.gz FORCE
 	$(call filechk,ikconfiggz)
