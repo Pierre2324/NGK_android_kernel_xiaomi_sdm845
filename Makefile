@@ -1,6 +1,6 @@
 VERSION = 4
 PATCHLEVEL = 9
-SUBLEVEL = 238
+SUBLEVEL = 246
 EXTRAVERSION =
 NAME = Roaring Lionus
 
@@ -254,10 +254,8 @@ SUBARCH := $(shell uname -m | sed -e s/i.86/x86/ -e s/x86_64/x86/ \
 # "make" in the configured kernel build directory always uses that.
 # Default value for CROSS_COMPILE is not to prefix executables
 # Note: Some architectures assign CROSS_COMPILE in their arch/*/Makefile
-override ARCH		:= arm64
-override CROSS_COMPILE	:= /media/pierre/Expension/Android/PocophoneF1/Kernels/Proton-Clang/bin/aarch64-linux-gnu-
-override CROSS_COMPILE_ARM32	:= /media/pierre/Expension/Android/PocophoneF1/Kernels/Proton-Clang/bin/arm-linux-gnueabi-
-
+ARCH		?= $(SUBARCH)
+CROSS_COMPILE	?= $(CONFIG_CROSS_COMPILE:"%"=%)
 
 # Architecture as present in compile.h
 UTS_MACHINE 	:= $(ARCH)
@@ -305,8 +303,7 @@ CONFIG_SHELL := $(shell if [ -x "$$BASH" ]; then echo $$BASH; \
 
 HOSTCC       = gcc
 HOSTCXX      = g++
-HOSTCFLAGS   := -Wall -Wmissing-prototypes -Wstrict-prototypes -O3 -fomit-frame-pointer -std=gnu89 -pipe -fforce-addr
-
+HOSTCFLAGS   := -Wall -Wmissing-prototypes -Wstrict-prototypes -O3 -fomit-frame-pointer -std=gnu89 -pipe -fforce-addr 
 HOSTCXXFLAGS = -O3
 
 ifeq ($(shell $(HOSTCC) -v 2>&1 | grep -c "clang version"), 1)
@@ -397,17 +394,17 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs -pipe \
 		   -fno-strict-aliasing -fno-common -fshort-wchar \
 		   -Werror-implicit-function-declaration \
 		   -Wno-format-security \
-#00		   -ffast-math -march=armv8.3-a+crypto -mcpu=cortex-a55 -mtune=cortex-a55 \
-#00		   -std=gnu89 \
-#00		   -mllvm -polly \
-#00		   -mllvm -polly-run-dce \
-#00		   -mllvm -polly-run-inliner \
-#00		   -mllvm -polly-opt-fusion=max \
-#00		   -mllvm -polly-ast-use-context \
-#00		   -mllvm -polly-vectorizer=stripmine \
-#00		   -mllvm -polly-detect-keep-going \
-#00		   -mllvm -polly-invariant-load-hoisting
-		   
+		   -ffast-math -march=armv8.3-a+crypto -mcpu=cortex-a55 -mtune=cortex-a55 \
+		   -std=gnu89 \
+		   -mllvm -polly \
+		   -mllvm -polly-run-dce \
+		   -mllvm -polly-run-inliner \
+		   -mllvm -polly-opt-fusion=max \
+		   -mllvm -polly-ast-use-context \
+		   -mllvm -polly-vectorizer=stripmine \
+		   -mllvm -polly-detect-keep-going \
+		   -mllvm -polly-invariant-load-hoisting
+
 KBUILD_CPPFLAGS := -D__KERNEL__
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
@@ -791,6 +788,10 @@ KBUILD_AFLAGS	+= $(call cc-option,-mabi=lp64)
 # Some toolchains enable those fixes automatically, so opt-out.
 KBUILD_CFLAGS	+= $(call cc-option, -mno-fix-cortex-a53-835769)
 KBUILD_CFLAGS	+= $(call cc-option, -mno-fix-cortex-a53-843419)
+
+ifdef CONFIG_CC_WERROR
+KBUILD_CFLAGS	+= -Werror
+endif
 
 ifdef CONFIG_CC_WERROR
 KBUILD_CFLAGS	+= -Werror
