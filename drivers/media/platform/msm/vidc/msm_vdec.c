@@ -723,7 +723,8 @@ int msm_vdec_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 		if (inst->fmts[fmt->type].fourcc == f->fmt.pix_mp.pixelformat &&
 			inst->prop.width[OUTPUT_PORT] == f->fmt.pix_mp.width &&
 			inst->prop.height[OUTPUT_PORT] ==
-				f->fmt.pix_mp.height) {
+			f->fmt.pix_mp.height &&
+			!inst->buffer_size_limit) {
 			dprintk(VIDC_DBG, "No change in OUTPUT port params\n");
 			return 0;
 		}
