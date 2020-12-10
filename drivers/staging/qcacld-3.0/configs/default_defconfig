@@ -547,6 +547,9 @@ CONFIG_WLAN_DFS_MASTER_ENABLE := y
 #Flag to enable nud tracking feature
 CONFIG_WLAN_NUD_TRACKING := n
 
+#Flag to enable/Disable Function call trace
+CONFIG_FUNC_CALL_MAP := n
+
 #Flag to enable wbuff feature
 CONFIG_WLAN_WBUFF := y
 
@@ -640,7 +643,16 @@ ifeq ($(CONFIG_ARCH_MSM8996), y)
 CONFIG_CHANNEL_HOPPING_ALL_BANDS := y
 endif
 
+ifneq ($(CONFIG_HIF_USB), y)
 CONFIG_WLAN_LOGGING_SOCK_SVC := n
+endif
+
+ifneq ($(TARGET_BUILD_VARIANT),user)
+CONFIG_DESC_DUP_DETECT_DEBUG := y
+endif
+
+CONFIG_DP_TRACE := y
+#Enable Beacon Reception Stats
 CONFIG_FEATURE_BECN_STATS := n
 
 #enable MPTA helper for QCS405
@@ -663,5 +675,11 @@ endif
 ifeq ($(CONFIG_ARCH_SDM660), y)
 CONFIG_WLAN_FEATURE_PKT_CAPTURE := y
 endif
+
+#Enable RX RING buffers debug
+CONFIG_DEBUG_RX_RING_BUFFER := n
+
+#Enable Hash debug
+CONFIG_RX_HASH_DEBUG := n
 
 CONFIG_WLAN_HANG_EVENT := n
