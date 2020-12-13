@@ -394,6 +394,7 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs -pipe \
 		   -fno-strict-aliasing -fno-common -fshort-wchar \
 		   -Werror-implicit-function-declaration \
 		   -Wno-format-security \
+		   -Wno-unused-function\
 		   -ffast-math -march=armv8.3-a+crypto -mcpu=cortex-a55 -mtune=cortex-a55 \
 		   -std=gnu89 \
 		   -mllvm -polly \
