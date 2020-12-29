@@ -2122,11 +2122,11 @@ long _do_fork(unsigned long clone_flags,
 	long nr;
 
 	/* Boost CPU to the max for 50 ms when userspace launches an app */
-	if (task_is_zygote(current)) {
-		cpu_input_boost_kick_max(1000);
-		devfreq_boost_kick_max(DEVFREQ_MSM_LLCCBW, 1000);
-		devfreq_boost_kick_max(DEVFREQ_MSM_CPUBW, 1000);
-	}
+	//if (task_is_zygote(current)) {
+		//cpu_input_boost_kick_max(1000);
+		//devfreq_boost_kick_max(DEVFREQ_MSM_LLCCBW, 1000);
+		//devfreq_boost_kick_max(DEVFREQ_MSM_CPUBW, 1000);
+	//}
 
 	/*
 	 * Determine whether and which event to report to ptracer.  When
