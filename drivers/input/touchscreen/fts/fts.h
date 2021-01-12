@@ -21,6 +21,8 @@
 #include "fts_lib/ftsSoftware.h"
 #include "fts_lib/ftsHardware.h"
 
+#define IRQ_FLAGS IRQF_TRIGGER_LOW | IRQF_ONESHOT | IRQF_PERF_CRITICAL
+
 #define FTS_POWER_ON     1
 #define FTS_POWER_OFF    0
 
@@ -139,7 +141,6 @@ struct fts_i2c_platform_data {
 	int (*power)(bool on);
 	int irq_gpio;
 	int reset_gpio;
-	unsigned long irq_flags;
 	const char *pwr_reg_name;
 	const char *bus_reg_name;
 	size_t config_array_size;

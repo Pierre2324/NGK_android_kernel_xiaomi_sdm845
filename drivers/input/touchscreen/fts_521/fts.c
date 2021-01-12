@@ -4454,7 +4454,7 @@ static int fts_interrupt_install(struct fts_ts_info *info)
 	/* disable interrupts in any case */
 	error = fts_disableInterrupt();
 	logError(1, "%s Interrupt Mode\n", tag);
-	if (request_threaded_irq(info->client->irq, NULL, fts_event_handler, info->board->irq_flags,
+	if (request_threaded_irq(info->client->irq, NULL, fts_event_handler, IRQ_FLAGS,
 			 FTS_TS_DRV_NAME, info)) {
 		logError(1, "%s Request irq failed\n", tag);
 		kfree(info->event_dispatch_table);
@@ -5352,11 +5352,6 @@ static int parse_dt(struct device *dev, struct fts_hw_platform_data *bdata)
 		bdata->reset_gpio = GPIO_NOT_DEFINED;
 	}
 
-	retval = of_property_read_u32(np, "fts,irq-flags", &temp_val);
-	if (retval < 0)
-		return retval;
-	else
-		bdata->irq_flags = temp_val;
 	retval = of_property_read_u32(np, "fts,x-max", &temp_val);
 	if (retval < 0)
 		bdata->x_max = X_AXIS_MAX;

@@ -41,7 +41,7 @@
 //---INT trigger mode---
 //#define IRQ_TYPE_EDGE_RISING 1
 //#define IRQ_TYPE_EDGE_FALLING 2
-#define INT_TRIGGER_TYPE IRQ_TYPE_EDGE_RISING
+#define INT_TRIGGER_TYPE (IRQF_TRIGGER_RISING | IRQF_PERF_CRITICAL)
 
 
 //---I2C driver info.---

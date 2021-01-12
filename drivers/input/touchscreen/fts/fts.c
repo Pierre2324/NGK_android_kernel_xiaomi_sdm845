@@ -2469,7 +2469,7 @@ static int fts_interrupt_install(struct fts_ts_info *info)
 #else
 	log_debug("%s Interrupt Mode\n", tag);
 
-	if (request_irq(info->client->irq, fts_interrupt_handler, info->bdata->irq_flags, info->client->name, info)) {
+	if (request_irq(info->client->irq, fts_interrupt_handler, IRQ_FLAGS, info->client->name, info)) {
 		log_error("%s Request irq failed\n", tag);
 		kfree(info->event_dispatch_table);
 		error = -EBUSY;
@@ -2982,12 +2982,6 @@ static int parse_dt(struct device *dev, struct fts_i2c_platform_data *bdata)
 	} else {
 		bdata->reset_gpio = GPIO_NOT_DEFINED;
 	}
-
-	retval = of_property_read_u32(np, "fts,irq-flags", &temp_val);
-	if (retval < 0)
-		return retval;
-	else
-		bdata->irq_flags = temp_val;
 
 	retval = of_property_read_u32(np, "fts,config-array-size", (u32 *)&bdata->config_array_size);
 

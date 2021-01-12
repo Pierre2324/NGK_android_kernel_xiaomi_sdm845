@@ -53,6 +53,7 @@
 #define PINCTRL_STATE_SUSPEND		"pmx_ts_suspend"
 #define PINCTRL_STATE_RELEASE		"pmx_ts_release"
 
+#define IRQ_FLAGS IRQF_TRIGGER_LOW | IRQF_ONESHOT | IRQF_PERF_CRITICAL
 
 #define DRIVER_TEST
 
@@ -178,7 +179,6 @@ struct fts_hw_platform_data {
 	int (*power) (bool on);
 	int irq_gpio;
 	int reset_gpio;
-	unsigned long irq_flags;
 	unsigned int x_max;
 	unsigned int y_max;
 	const char *vdd_reg_name;
