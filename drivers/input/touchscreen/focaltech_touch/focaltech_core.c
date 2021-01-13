@@ -45,6 +45,7 @@
 #ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE
 #include "../xiaomi/xiaomi_touch.h"
 #endif
+#include <linux/cpu.h>
 
 /*****************************************************************************
 * Private constant and macro definitions using #define
@@ -1904,10 +1905,14 @@ static int fb_notifier_callback(struct notifier_block *self, unsigned long event
 		blank = evdata->data;
 		flush_workqueue(fts_data->event_wq);
 
-		if (*blank == DRM_BLANK_UNBLANK)
+		if (*blank == DRM_BLANK_UNBLANK){
+			irq_set_affinity(fts_data->irq, cpu_perf_mask);
 			queue_work(fts_data->event_wq, &fts_data->resume_work);
-		else if (*blank == DRM_BLANK_POWERDOWN)
+		}
+		else if (*blank == DRM_BLANK_POWERDOWN){
+			irq_set_affinity(fts_data->irq, cpumask_of(0));
 			queue_work(fts_data->event_wq, &fts_data->suspend_work);
+		}
 	}
 
 	return 0;

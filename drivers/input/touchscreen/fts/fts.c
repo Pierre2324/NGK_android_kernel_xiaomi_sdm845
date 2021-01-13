@@ -38,6 +38,7 @@
 #ifdef CONFIG_DRM
 #include <drm/drm_notifier.h>
 #endif
+#include <linux/cpu.h>
 
 #ifdef KERNEL_ABOVE_2_6_38
 #include <linux/input/mt.h>
@@ -2722,6 +2723,7 @@ static int fts_drm_state_chg_callback(struct notifier_block *nb, unsigned long v
 				break;
 
 			log_error("%s %s: DRM_BLANK_POWERDOWN\n", tag, __func__);
+			irq_set_affinity(info->client->irq, cpumask_of(0));
 			queue_work(info->event_wq, &info->suspend_work);
 			break;
 
@@ -2730,6 +2732,7 @@ static int fts_drm_state_chg_callback(struct notifier_block *nb, unsigned long v
 				break;
 
 			log_error("%s %s: DRM_BLANK_UNBLANK\n", tag, __func__);
+			irq_set_affinity(info->client->irq, cpu_perf_mask);
 			queue_work(info->event_wq, &info->resume_work);
 			break;
 
