@@ -2196,6 +2196,8 @@ static int fts_ts_probe(struct i2c_client *client, const struct i2c_device_id *i
 		FTS_ERROR("request irq failed");
 		goto err_event_wq;
 	}
+	else
+		irq_set_affinity(fts_data->irq, cpu_perf_mask);
 #if FTS_AUTO_UPGRADE_EN
 	ret = fts_fwupg_init(ts_data);
 	if (ret) {
