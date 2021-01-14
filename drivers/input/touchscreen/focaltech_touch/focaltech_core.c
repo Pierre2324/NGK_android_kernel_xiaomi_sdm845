@@ -861,6 +861,10 @@ static __always_inline int fts_read_touchdata(struct fts_ts_data *data)
 		fts_read_palm_data();
 #endif
 
+	struct sched_param param = { .sched_priority = MAX_USER_RT_PRIO / 2 };
+
+	sched_setscheduler(current, SCHED_FIFO, &param);
+
 	data->point_num = 0;
 	data->touch_point = 0;
 
