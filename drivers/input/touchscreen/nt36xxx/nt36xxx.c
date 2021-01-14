@@ -1088,6 +1088,8 @@ static irqreturn_t nvt_ts_work_func(int irq, void *data)
 
 	sched_setscheduler(current, SCHED_FIFO, &param);
 
+	mutex_lock(&ts->lock);
+
 	ret = CTP_I2C_READ(ts->client, I2C_FW_Address, point_data, POINT_DATA_LEN + 1);
 	if (unlikely(ret < 0)) {
 		NVT_ERR("CTP_I2C_READ failed.(%d)\n", ret);
