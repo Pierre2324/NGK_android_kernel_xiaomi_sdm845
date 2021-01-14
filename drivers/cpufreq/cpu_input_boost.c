@@ -74,9 +74,9 @@ static u32 get_input_boost_freq(struct cpufreq_policy *policy)
 	u32 freq;
 
 	if (cpumask_test_cpu(policy->cpu, cpu_lp_mask))
-		freq = input_boost_freq_lp;
+		freq = max(input_boost_freq_lp, remove_input_boost_freq_lp);
 	else
-		freq = input_boost_freq_hp;
+		freq = max(input_boost_freq_hp, remove_input_boost_freq_perf);
 
 	return min(freq, policy->max);
 }
@@ -131,7 +131,7 @@ static void update_online_cpu_policy(void)
 
 static void __cpu_input_boost_kick(struct boost_drv *b)
 {
-	if (get_boost_state(b) & SCREEN_OFF)
+	if ((get_boost_state(b) & SCREEN_OFF) || CONFIG_INPUT_BOOST_DURATION_MS == 0)
 		return;
 
 	set_boost_bit(b, INPUT_BOOST);
