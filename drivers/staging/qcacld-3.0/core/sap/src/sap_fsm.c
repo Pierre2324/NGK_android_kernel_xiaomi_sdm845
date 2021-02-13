@@ -2844,7 +2844,7 @@ QDF_STATUS sap_fsm(struct sap_context *sap_ctx, struct sap_sm_event *sap_event)
 	 * state var that keeps track of state machine
 	 */
 	enum sap_fsm_state state_var = sap_ctx->fsm_state;
-	uint32_t msg = sap_event->event; /* State machine input event message */
+	uint32_t msg __maybe_unused = sap_event->event; /* State machine input event message */
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	struct mac_context *mac_ctx;
 	mac_handle_t mac_handle;
