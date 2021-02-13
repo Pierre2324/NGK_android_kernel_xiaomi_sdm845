@@ -271,6 +271,7 @@ ifeq ($(CONFIG_ROME_IF),usb)
 	CONFIG_LINUX_QCMBR :=y
 endif
 
+
 CONFIG_FEATURE_EPPING := y
 
 #Flag to enable offload packets feature
@@ -537,7 +538,7 @@ CONFIG_WLAN_LOG_INFO := y
 CONFIG_ATH_PERF_PWR_OFFLOAD := y
 
 #Disable packet log
-CONFIG_REMOVE_PKT_LOG := y
+CONFIG_REMOVE_PKT_LOG := n
 
 #Enable 11AC TX
 ifeq ($(CONFIG_ROME_IF),pci)
@@ -837,7 +838,7 @@ ifneq ($(CONFIG_WIFI_POS_CONVERGED), y)
 CONFIG_WIFI_POS_LEGACY := y
 endif
 
-CONFIG_CP_STATS := n
+CONFIG_CP_STATS := y
 CONFIG_FEATURE_INTEROP_ISSUES_AP := y
 
 CONFIG_FEATURE_WLAN_WAPI := y
