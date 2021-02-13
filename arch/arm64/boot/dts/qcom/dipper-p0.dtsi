@@ -1029,6 +1029,26 @@
 				hysteresis = <1000>;
 				type = "passive";
 			};
+			batt_charging_lv1: batt-charging_lv1 {
+				temperature = <39000>;
+				hysteresis = <1000>;
+				type = "passive";
+			};
+			batt_charging_lv2: batt-charging_lv2 {
+				temperature = <41000>;
+				hysteresis = <1000>;
+				type = "passive";
+			};
+			batt_charging_lv3: batt-charging_lv3 {
+				temperature = <43000>;
+				hysteresis = <1000>;
+				type = "passive";
+			};
+			batt_charging_lv4: batt-charging_lv4 {
+				temperature = <48000>;
+				hysteresis = <1000>;
+				type = "passive";
+			};
 		};
 		cooling-maps {
 			charging_cdev_lv1 {
@@ -1057,7 +1077,6 @@
 		thermal-governor = "user_space";
 		wake-capable-sensor;
 
-		wake-capable-sensor;
 		disable-thermal-zone;
 
 		trips {
