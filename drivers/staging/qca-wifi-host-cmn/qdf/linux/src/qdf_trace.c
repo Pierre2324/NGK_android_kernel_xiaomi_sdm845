@@ -3813,7 +3813,6 @@ bool qdf_print_is_verbose_enabled(unsigned int idx, QDF_MODULE_ID category,
 	return verbose_enabled;
 }
 qdf_export_symbol(qdf_print_is_verbose_enabled);
-#endif
 
 #ifdef DBG_LVL_MAC_FILTERING
 

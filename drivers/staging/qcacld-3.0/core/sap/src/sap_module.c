@@ -1332,7 +1332,6 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sap_ctx,
 		return QDF_STATUS_E_FAULT;
 	}
 
-#ifdef WLAN_DEBUG
 	sap_nofl_debug("SAP CSA: %d ---> %d conn on 5GHz:%d, csa_reason:%s(%d) strict %d vdev %d",
 		       sap_ctx->chan_freq, target_chan_freq,
 		       policy_mgr_is_any_mode_active_on_band_along_with_session(
