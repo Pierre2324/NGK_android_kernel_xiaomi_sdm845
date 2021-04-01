@@ -44,17 +44,24 @@
 * Global variable or extern global variabls/functions
 *****************************************************************************/
 /* Upgrade FW/PRAMBOOT/LCD CFG */
-static u8 fw_file[] = {
+u8 fw_file[] = {
 #include FTS_UPGRADE_FW_FILE_E10
 };
 
-static struct upgrade_fw fw_list[] = {
+u8 fw_file2[] = {
+#include FTS_UPGRADE_FW_FILE_E5
+};
+
+struct upgrade_fw fw_list[] = {
 	{FTS_PROJECT_NAME, FTS_VENDOR_ID, fw_file, sizeof(fw_file)}
+	,
+	{FTS_PROJECT_NAME1, FTS_VENDOR_ID2, fw_file2, sizeof(fw_file2)}
 	,
 };
 
 static struct upgrade_func *upgrade_func_list[] = {
 	&upgrade_func_ft8719,
+	&upgrade_func_ft5452,
 };
 
 static struct fts_upgrade *fwupgrade;
@@ -1706,14 +1713,17 @@ static int fts_fwupg_get_fw_file(struct fts_ts_data *ts_data)
 #endif
 	for (i = 0; i < sizeof(fw_list)/sizeof(fw_list[0]); i++) {
 		fw = &fw_list[i];
-		len = strlen(ts_data->pdata->project_name) > strlen(fw->project_name) ? strlen(ts_data->pdata->project_name) : strlen(fw->project_name);
+		len = strlen(ts_data->pdata->project_name) > strlen(fw->project_name) ?
+				strlen(ts_data->pdata->project_name) : strlen(fw->project_name);
 #ifdef FW_UPDATE_BY_VENDOR_ID
-		if (ts_data->pdata->project_name && !strncmp(ts_data->pdata->project_name, fw->project_name, len) && vendor_id == fw->vendor_id) {
+		if (ts_data->pdata->project_name &&
+				!strncmp(ts_data->pdata->project_name, fw->project_name, len) && vendor_id == fw->vendor_id) {
 			FTS_INFO("project id and vendor id match, get fw file successfully");
 			break;
 		}
 #else
-		if (ts_data->pdata->project_name && !strncmp(ts_data->pdata->project_name, fw->project_name, strlen(ts_data->pdata->project_name))) {
+		if (ts_data->pdata->project_name &&
+				!strncmp(ts_data->pdata->project_name, fw->project_name, strlen(ts_data->pdata->project_name))) {
 			FTS_INFO("vendor id match, get fw file successfully");
 			break;
 		}

@@ -210,6 +210,8 @@
  */
 #define FTS_UPGRADE_FW_FILE_E10                      "include/firmware/fw_ft8719_e10.i"
 
+#define FTS_UPGRADE_FW_FILE_E5                      "include/firmware/fw_ft3518_e5.i"
+
 /*
  * if FTS_GET_VENDOR_ID_NUM >= 2, fw corrsponding with FTS_VENDOR_ID2
  * define your own fw_file, the sample one is invalid
