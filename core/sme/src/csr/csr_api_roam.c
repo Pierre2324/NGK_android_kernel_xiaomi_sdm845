@@ -23274,7 +23274,10 @@ void csr_roaming_report_diag_event(tpAniSirGlobal mac_ctx,
  */
 void csr_process_ho_fail_ind(tpAniSirGlobal mac_ctx, void *pMsgBuf)
 {
-	tSirSmeHOFailureInd *pSmeHOFailInd = (tSirSmeHOFailureInd *) pMsgBuf;
+	struct handoff_failure_ind *pSmeHOFailInd = msg_buf;
+	struct mlme_roam_after_data_stall *vdev_roam_params;
+	struct wlan_objmgr_vdev *vdev;
+	struct reject_ap_info ap_info;
 	uint32_t sessionId;
 
 	if (pSmeHOFailInd)
@@ -23284,6 +23287,14 @@ void csr_process_ho_fail_ind(tpAniSirGlobal mac_ctx, void *pMsgBuf)
 			  "LFR3: Hand-Off Failure Ind is NULL");
 		return;
 	}
+
+	sessionId = pSmeHOFailInd->vdev_id;
+	ap_info.bssid = pSmeHOFailInd->bssid;
+	ap_info.reject_ap_type = DRIVER_AVOID_TYPE;
+	ap_info.reject_reason = REASON_ROAM_HO_FAILURE;
+	ap_info.source = ADDED_BY_DRIVER;
+	wlan_blm_add_bssid_to_reject_list(mac_ctx->pdev, &ap_info);
+
 	/* Roaming is supported only on Infra STA Mode. */
 	if (!csr_roam_is_sta_mode(mac_ctx, sessionId)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
