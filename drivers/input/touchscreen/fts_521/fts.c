@@ -2292,7 +2292,6 @@ static ssize_t fts_grip_area_store(struct device *dev,
 		logError(1, "%s %s: write failed...ERROR %08X !\n", tag,
 			 __func__, ret);
 		return -EPERM;
-<<<<<<< HEAD
 	}
 	return count;
 }
@@ -3169,232 +3168,6 @@ static ssize_t fts_secure_touch_show (struct device *dev, struct device_attribut
 
 static DEVICE_ATTR(gesture_enable, (S_IRUGO | S_IWUSR),
 		   fts_gesture_mask_show, fts_gesture_enable_store);
-
-static ssize_t fts_fod_status_show(struct device *dev,
-				    struct device_attribute *attr, char *buf)
-{
-	struct fts_ts_info *info = dev_get_drvdata(dev);
-
-	return snprintf(buf, TSP_BUF_SIZE, "%d\n", info->fod_status);
-}
-
-static ssize_t fts_fod_status_store(struct device *dev,
-				     struct device_attribute *attr,
-				     const char *buf, size_t count)
-{
-	struct fts_ts_info *info = dev_get_drvdata(dev);
-
-	logError(1, " %s %s,buf:%s,count:%zu\n", tag, __func__, buf, count);
-	sscanf(buf, "%u", &info->fod_status);
-	return count;
-}
-
-#ifdef CONFIG_SECURE_TOUCH
-static void fts_secure_touch_notify (struct fts_ts_info *info)
-{
-	/*might sleep*/
-	sysfs_notify(&info->dev->kobj, NULL, "secure_touch");
-	logError(1, "%s %s SECURE_NOTIFY:notify secure_touch\n", tag, __func__);
-}
-
-static int fts_secure_stop(struct fts_ts_info *info, bool block)
-{
-	struct fts_secure_info *scr_info = info->secure_info;
-
-	logError(1, "%s %s SECURE_STOP: block = %d\n", tag, __func__, (int)block);
-	if (atomic_read(&scr_info->st_enabled) == 0) {
-		logError(1, "%s %s secure touch is already disabled\n", tag, __func__);
-		return OK;
-	}
-
-	atomic_set(&scr_info->st_pending_irqs, -1);
-	fts_secure_touch_notify(info);
-	if (block) {
-		if (wait_for_completion_interruptible(&scr_info->st_powerdown) == -ERESTARTSYS) {
-			logError(1, "%s %s SECURE_STOP:st_powerdown be interrupted\n",
-				tag, __func__);
-		} else {
-			logError(1, "%s %s SECURE_STOP:st_powerdown be completed\n", tag, __func__);
-		}
-	}
-	return OK;
-}
-
-static void fts_secure_work(struct fts_secure_info *scr_info)
-{
-	struct fts_ts_info *info = (struct fts_ts_info *)scr_info->fts_info;
-
-
-	fts_secure_touch_notify(info);
-	atomic_set(&scr_info->st_1st_complete, 1);
-	if (wait_for_completion_interruptible(&scr_info->st_irq_processed) == -ERESTARTSYS) {
-		logError(1, "%s %s SECURE_FILTER:st_irq_processed be interrupted\n", tag, __func__);
-	} else {
-		logError(1, "%s %s SECURE_FILTER:st_irq_processed be completed\n", tag, __func__);
-	}
-
-	fts_enableInterrupt();
-	logError(1, "%s %s SECURE_FILTER:enable irq\n", tag, __func__);
-}
-
-/*
-static void fts_palm_store_delay(struct fts_secure_info *scr_info)
-{
-	int ret;
-	struct fts_ts_info *info = scr_info->fts_info;
-
-	logError(1, "%s %s IN", tag, __func__);
-	ret = fts_palm_sensor_cmd(scr_info->scr_delay.palm_value);
-	if (!ret)
-		info->palm_sensor_changed = true;
-	logError(1, "%s %s OUT", tag, __func__);
-}
-
-
-static void fts_flush_delay_task(struct fts_secure_info *scr_info)
-{
-	if (scr_info->scr_delay.palm_pending) {
-		fts_palm_store_delay(scr_info);
-		scr_info->scr_delay.palm_pending = false;
-	}
-}
-*/
-
-static int fts_secure_filter_interrupt(struct fts_ts_info *info)
-{
-	struct fts_secure_info *scr_info = info->secure_info;
-
-	/*inited and enable first*/
-	if (!scr_info->secure_inited || atomic_read(&scr_info->st_enabled) == 0) {
-		return -EPERM;
-	}
-
-	fts_disableInterruptNoSync();
-	logError(1, "%s %s SECURE_FILTER:disable irq\n", tag, __func__);
-	/*check and change irq pending state
-	 *change irq pending here, secure_touch_show, secure_touch_enable_store
-	 *completion st_irq_processed at secure_touch_show, secure_touch_enable_stroe
-	 */
-	logError(1, "%s %s SECURE_FILTER:st_pending_irqs = %d\n",
-		tag, __func__, atomic_read(&scr_info->st_pending_irqs));
-	if (atomic_cmpxchg(&scr_info->st_pending_irqs, 0, 1) == 0) {
-		fts_secure_work(scr_info);
-		logError(1, "%s %s SECURE_FILTER:secure_work return\n", tag, __func__);
-	}
-
-	return 0;
-}
-
-static ssize_t fts_secure_touch_enable_show (struct device *dev,
-										struct device_attribute *attr, char *buf)
-{
-	struct fts_ts_info *info = dev_get_drvdata(dev);
-	struct fts_secure_info *scr_info = info->secure_info;
-
-	logError(1, "%s %s SECURE_TOUCH_ENABLE[R]:st_enabled = %d\n", tag, __func__, atomic_read(&scr_info->st_enabled));
-	return scnprintf(buf, PAGE_SIZE, "%d", atomic_read(&scr_info->st_enabled));
-}
-
-/* 	echo 0 > secure_touch_enable to disable secure touch
- * 	echo 1 > secure_touch_enable to enable secure touch
- */
-static ssize_t fts_secure_touch_enable_store (struct device *dev, struct device_attribute *attr,
-				const char *buf, size_t count)
-{
-	int ret;
-	unsigned long value;
-	struct fts_ts_info *info = dev_get_drvdata(dev);
-	struct fts_secure_info *scr_info = info->secure_info;
-
-	atomic_set(&scr_info->st_1st_complete, 0);
-	logError(1, "%s %s SECURE_TOUCH_ENABLE[W]:st_1st_complete=0\n", tag, __func__);
-	logError(1, "%s %s SECURE_TOUCH_ENABLE[W]:parse parameter\n", tag, __func__);
-	/*check and get cmd*/
-	if (count > 2)
-		return -EINVAL;
-	ret = kstrtoul(buf, 10, &value);
-	if (ret != 0)
-		return ret;
-
-	if (!scr_info->secure_inited)
-		return -EIO;
-
-	ret = count;
-
-	logError(1, "%s %s SECURE_TOUCH_ENABLE[W]:st_enabled = %d\n", tag, __func__, value);
-	switch (value) {
-	case 0:
-		if (atomic_read(&scr_info->st_enabled) == 0) {
-			logError(1, "%s %s secure touch is already disabled\n",
-				tag, __func__);
-			return ret;
-		}
-//		mutex_lock(&scr_info->palm_lock);
-		atomic_set(&scr_info->st_enabled, 0);
-		fts_secure_touch_notify(info);
-		complete(&scr_info->st_irq_processed);
-		fts_event_handler(info->client->irq, info);
-		complete(&scr_info->st_powerdown);
-//		fts_flush_delay_task(scr_info);
-//		mutex_unlock(&scr_info->palm_lock);
-		logError(1, "%s %s SECURE_TOUCH_ENABLE[W]:disable secure touch successful\n",
-			tag, __func__);
-	break;
-	case 1:
-		if (atomic_read(&scr_info->st_enabled) == 1) {
-			logError(1, "%s %s secure touch is already enabled\n",
-				tag, __func__);
-			return ret;
-		}
-//		mutex_lock(&scr_info->palm_lock);
-		/*wait until finish process all normal irq*/
-		synchronize_irq(info->client->irq);
-
-		/*enable secure touch*/
-		reinit_completion(&scr_info->st_powerdown);
-		reinit_completion(&scr_info->st_irq_processed);
-		atomic_set(&scr_info->st_pending_irqs, 0);
-		atomic_set(&scr_info->st_enabled, 1);
-//		mutex_unlock(&scr_info->palm_lock);
-		logError(1, "%s %s SECURE_TOUCH_ENABLE[W]:enable secure touch successful\n",
-			tag, __func__);
-	break;
-	default:
-		logError(1, "%s %s %d in secure_touch_enable is not support\n",
-			tag, __func__, value);
-	break;
-	}
-	return ret;
-}
-
-static ssize_t fts_secure_touch_show (struct device *dev, struct device_attribute *attr, char *buf)
-{
-	struct fts_ts_info *info = dev_get_drvdata(dev);
-	struct fts_secure_info *scr_info = info->secure_info;
-	int value = 0;
-
-	logError(1, "%s %s SECURE_TOUCH[R]:st_1st_complete = %d\n",
-		tag, __func__, atomic_read(&scr_info->st_1st_complete));
-	logError(1, "%s %s SECURE_TOUCH[R]:st_pending_irqs = %d\n",
-		tag, __func__, atomic_read(&scr_info->st_pending_irqs));
-
-	if (atomic_read(&scr_info->st_enabled) == 0) {
-		return -EBADF;
-	}
-
-	if (atomic_cmpxchg(&scr_info->st_pending_irqs, -1, 0) == -1)
-		return -EINVAL;
-
-	if (atomic_cmpxchg(&scr_info->st_pending_irqs, 1, 0) == 1) {
-		value = 1;
-	} else if (atomic_cmpxchg(&scr_info->st_1st_complete, 1, 0) == 1) {
-		complete(&scr_info->st_irq_processed);
-		logError(1, "%s %s SECURE_TOUCH[R]:comlpetion st_irq_processed\n", tag, __func__);
-	}
-	return scnprintf(buf, PAGE_SIZE, "%d", value);
-}
-#endif
-
 static DEVICE_ATTR(fts_lockdown, (S_IRUGO | S_IWUSR | S_IWGRP),
 		   fts_lockdown_show, fts_lockdown_store);
 static DEVICE_ATTR(fwupdate, (S_IRUGO | S_IWUSR | S_IWGRP), fts_fwupdate_show,
@@ -5183,7 +4956,6 @@ static int fts_drm_state_chg_callback(struct notifier_block *nb,
 			logError(1, "%s %s: FB_BLANK_POWERDOWN\n", tag, __func__);
 
 			irq_set_affinity(info->client->irq, cpumask_of(0));
-
 			queue_work(info->event_wq, &info->suspend_work);
 		} else if (val == DRM_EVENT_BLANK && blank == DRM_BLANK_UNBLANK) {
 #ifdef CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE_SENSOR
@@ -5196,7 +4968,6 @@ static int fts_drm_state_chg_callback(struct notifier_block *nb,
 			logError(1, "%s %s: FB_BLANK_UNBLANK\n", tag, __func__);
 
 			irq_set_affinity(info->client->irq, cpu_perf_mask);
-
 			queue_work(info->event_wq, &info->resume_work);
 		}
 	}
@@ -6647,6 +6418,7 @@ static int fts_probe(struct spi_device *client)
 		goto ProbeErrorExit_7;
 	}
 
+
 	error = fts_proc_init();
 	if (error < OK)
 		logError(1, "%s Error: can not create /proc file! \n", tag);
@@ -6681,13 +6453,6 @@ static int fts_probe(struct spi_device *client)
 #endif
 	xiaomitouch_register_modedata(&xiaomi_touch_interfaces);
 #endif
-
-	info->dev_pm_suspend = false;
-	init_completion(&info->dev_pm_suspend_completion);
-
-	if (backlight_register_notifier(&info->bl_notifier) < 0) {
-		logError(1, "%s ERROR: register bl_notifier failed!\n", tag);
-	}
 
 	info->dev_pm_suspend = false;
 	init_completion(&info->dev_pm_suspend_completion);
