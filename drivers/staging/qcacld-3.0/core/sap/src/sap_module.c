@@ -1398,16 +1398,10 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sapContext,
 	sap_nofl_debug("SAP CSA: %d ---> %d conn on 5GHz:%d, csa_reason:%s(%d) strict %d vdev %d",
 		       sapContext->channel, targetChannel,
 		       policy_mgr_is_any_mode_active_on_band_along_with_session(
-<<<<<<< HEAD
-		       mac->psoc, sap_ctx->sessionId, POLICY_MGR_BAND_5),
-		       sap_get_csa_reason_str(sap_ctx->csa_reason),
-		       sap_ctx->csa_reason, strict, sap_ctx->sessionId);
-=======
 		       pMac->psoc, sapContext->sessionId, POLICY_MGR_BAND_5),
 		       sap_get_csa_reason_str(sapContext->csa_reason),
 		       sapContext->csa_reason, strict, sapContext->sessionId);
 
->>>>>>> f14ce91aa3ee8... qcacld-3.0: Downgrade to tag 'LA.UM.8.3.r1-08800-sdm845.0' of https://source.codeaurora.org/quic/la/platform/vendor/qcom-opensource/wlan/qcacld-3.0
 	sta_sap_scc_on_dfs_chan =
 		policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(pMac->psoc);
 	/*

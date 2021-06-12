@@ -79,8 +79,6 @@
 #define wmi_info(params...) QDF_TRACE_INFO(QDF_MODULE_ID_WMI, ## params)
 #define wmi_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_WMI, ## params)
 
-#ifdef WMI_INTERFACE_EVENT_LOGGING
-
 #define wmi_nofl_alert(params...) \
 	QDF_TRACE_FATAL_NO_FL(QDF_MODULE_ID_WMI, ## params)
 #define wmi_nofl_err(params...) \
