@@ -235,6 +235,7 @@ struct arm64_cpu_capabilities {
 			u32 midr_range_min, midr_range_max;
 		};
 
+		const struct midr_range *midr_range_list;
 		struct {	/* Feature register checking */
 			u32 sys_reg;
 			u8 field_pos;
