@@ -1008,6 +1008,11 @@ __ni_sys_trace:
 	 */
 	.endm
 
+	.macro tramp_data_page	dst
+	adr	\dst, .entry.tramp.text
+	sub	\dst, \dst, PAGE_SIZE
+	.endm
+
 	.macro tramp_ventry, regsize = 64
 	.align	7
 1:
@@ -1026,6 +1031,7 @@ __ni_sys_trace:
 #ifdef CONFIG_RANDOMIZE_BASE
 	adr	x30, tramp_vectors + PAGE_SIZE
 #ifndef CONFIG_ARCH_MSM8996
+	tramp_data_page		x30
 	isb
 #endif
 	ldr	x30, [x30]
