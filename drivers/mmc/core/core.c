@@ -4750,7 +4750,6 @@ int mmc_flush_cache(struct mmc_card *card)
 		if (err)
 			pr_err("%s: cache flush error %d\n",
 					mmc_hostname(card->host), err);
-		}
 	}
 
 	return err;
