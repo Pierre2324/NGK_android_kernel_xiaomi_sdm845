@@ -126,3 +126,7 @@ Android.bp
 
 #Output folder
 out
+
+#Touch FW
+firmware/novatek_nt36672_e10_hw01.fw.ihex
+firmware/novatek_nt36672_e10_hw02.fw.ihex

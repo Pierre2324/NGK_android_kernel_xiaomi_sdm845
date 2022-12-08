@@ -3,10 +3,10 @@
 # Many parts of this script were taken from @REIGNZ, @idkwhoiam322 and @raphielscape . Huge thanks to them.
 
 # Some general variables
-PHONE="dipper"
+PHONE="beryllium"
 ARCH="arm64"
 SUBARCH="arm64"
-DEFCONFIG=nogravity-dipper_defconfig
+DEFCONFIG=nogravity_defconfig
 #DEFCONFIG=beryllium_defconfig
 COMPILER=clang
 LINKER=""
@@ -15,8 +15,10 @@ COMPILERDIR="/media/pierre/Expension/Android/PocophoneF1/Kernels/Proton-Clang"
 # Outputs
 mkdir out/outputs
 mkdir out/outputs/${PHONE}
-mkdir out/outputs/${PHONE}/SE
-mkdir out/outputs/${PHONE}/NSE
+mkdir out/outputs/${PHONE}/9.1.24-SE
+mkdir out/outputs/${PHONE}/9.1.24-NSE
+mkdir out/outputs/${PHONE}/10.3.7-SE
+mkdir out/outputs/${PHONE}/10.3.7-NSE
 
 # Export shits
 export KBUILD_BUILD_USER=Pierre2324
@@ -73,7 +75,8 @@ fi
 # Build starts here
 if [ -z ${LINKER} ]
 then
-    #Start with SE
+    #Start with 9.1.24-SE
+    cp firmware/touch_fw_variant/9.1.24/* firmware/
     cp arch/arm64/boot/dts/qcom/SE_NSE/SE/* arch/arm64/boot/dts/qcom/
     Build
 else
@@ -86,18 +89,43 @@ then
     rm -rf out/outputs/${PHONE}/*
 else
     echo "Build succesful"
-    cp out/arch/arm64/boot/Image.gz-dtb out/outputs/${PHONE}/SE/Image.gz-dtb
+    cp out/arch/arm64/boot/Image.gz-dtb out/outputs/${PHONE}/9.1.24-SE/Image.gz-dtb
     
-    #NSE
+    #9.1.24-NSE
     cp arch/arm64/boot/dts/qcom/SE_NSE/NSE/* arch/arm64/boot/dts/qcom/
     Build
     if [ $? -ne 0 ]
     then
         echo "Build failed"
-        rm -rf out/outputs/${PHONE}/NSE/*
+        rm -rf out/outputs/${PHONE}/9.1.24-NSE/*
     else
         echo "Build succesful"
-        cp out/arch/arm64/boot/Image.gz-dtb out/outputs/${PHONE}/NSE/Image.gz-dtb
+        cp out/arch/arm64/boot/Image.gz-dtb out/outputs/${PHONE}/9.1.24-NSE/Image.gz-dtb
+
+        #10.3.7-SE
+        cp firmware/touch_fw_variant/10.3.7/* firmware/
+        cp arch/arm64/boot/dts/qcom/SE_NSE/SE/* arch/arm64/boot/dts/qcom/
+        Build
+        if [ $? -ne 0 ]
+        then
+            echo "Build failed"
+            rm -rf out/outputs/${PHONE}/10.3.7-SE/*
+        else
+            echo "Build succesful"
+            cp out/arch/arm64/boot/Image.gz-dtb out/outputs/${PHONE}/10.3.7-SE/Image.gz-dtb
+
+            #10.3.7-NSE
+            cp arch/arm64/boot/dts/qcom/SE_NSE/NSE/* arch/arm64/boot/dts/qcom/
+            Build
+            if [ $? -ne 0 ]
+            then
+                echo "Build failed"
+                rm -rf out/outputs/${PHONE}/10.3.7-NSE/*
+            else
+                echo "Build succesful"
+                cp out/arch/arm64/boot/Image.gz-dtb out/outputs/${PHONE}/10.3.7-NSE/Image.gz-dtb
+            fi
+        fi
     fi
 fi
 
