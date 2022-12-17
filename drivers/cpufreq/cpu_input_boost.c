@@ -429,6 +429,7 @@ static int __init cpu_input_boost_init(void)
 	atomic_set(&b->state, 0);
 
 	b->cpu_notif.notifier_call = cpu_notifier_cb;
+	b->cpu_notif.priority = INT_MAX - 2;
 	ret = cpufreq_register_notifier(&b->cpu_notif, CPUFREQ_POLICY_NOTIFIER);
 	if (ret) {
 		pr_err("Failed to register cpufreq notifier, err: %d\n", ret);
@@ -450,7 +451,7 @@ static int __init cpu_input_boost_init(void)
 		goto unregister_handler;
 	}
 
-	boost_thread = kthread_run(cpu_boost_thread, b, "cpu_boostd");
+	boost_thread = kthread_run_perf_critical(cpu_perf_mask, cpu_boost_thread, b, "cpu_boostd");
 	if (IS_ERR(boost_thread)) {
 		pr_err("Failed to start CPU boost thread, err: %ld\n",
 		       PTR_ERR(boost_thread));
