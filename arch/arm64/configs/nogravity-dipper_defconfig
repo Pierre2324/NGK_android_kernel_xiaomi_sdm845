@@ -37,7 +37,7 @@ CONFIG_THREAD_INFO_IN_TASK=y
 
 # General setup
 #
-CONFIG_LOCALVERSION="-NoGravityKernel-v4.3.1"
+CONFIG_LOCALVERSION="-NoGravityKernel-v4.4.0"
 # CONFIG_FHANDLE is not set
 # CONFIG_USELIB is not set
 CONFIG_AUDIT=y
