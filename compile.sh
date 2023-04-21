@@ -8,6 +8,8 @@ yellow='\033[0;33m'
 red='\033[0;31m'
 nocol='\033[0m'
 
+curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
+
 # Cleanup
 rm -rf out/outputs/*
 
