@@ -143,3 +143,8 @@ Android.bp
 
 #Out folder
 out
+
+#Submodules
+arch/arm64/boot/dts/qcom-sdm845/*
+arch/arm64/boot/dts/xiaomi/*
+techpack/mi845/*
