@@ -13,7 +13,7 @@ rm -rf out/outputs/*
 
 curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
 
-./compile-berylium.sh
+./compile-beryllium.sh
 ./compile-dipper.sh
 
 BUILD_END=$(date +"%s")
