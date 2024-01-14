@@ -301,7 +301,7 @@ struct proc_maps_private {
 	struct mempolicy *task_mempolicy;
 #endif
 	unsigned long old_cpus_allowed;
-} __randomize_layout;
+};
 
 struct mm_struct *proc_mem_open(struct inode *inode, unsigned int mode);
 
