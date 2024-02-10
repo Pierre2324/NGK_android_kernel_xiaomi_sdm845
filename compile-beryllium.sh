@@ -12,6 +12,12 @@ COMPILERDIR="/media/pierre/Expension/Android/PocoX3Pro/Kernels/Proton-Clang"
 # Cleanup output
 rm -rf out/outputs/${PHONE}/*
 
+# Outputs
+mkdir out/outputs
+mkdir out/outputs/${PHONE}
+mkdir out/outputs/${PHONE}/9.1.24
+mkdir out/outputs/${PHONE}/10.3.7
+
 # Export shits
 export KBUILD_BUILD_USER=Pierre2324
 export KBUILD_BUILD_HOST=G7-7588
@@ -70,12 +76,22 @@ else
     echo "Made ${DEFCONFIG}"
 fi
 
+make O=out ARCH=${ARCH} ${DEFCONFIG}
+if [ $? -ne 0 ]
+then
+    echo "Build failed"
+else
+    echo "Made ${DEFCONFIG}"
+fi
+
 # Build starts here
 if [ -z ${LINKER} ]
 then
+    #Start with 9.1.24
+    cp firmware/touch_fw_variant/9.1.24/* firmware/
     Build
 else
-    echo | Build_lld
+    Build_lld
 fi
 
 if [ $? -ne 0 ]
@@ -84,11 +100,21 @@ then
     rm -rf out/outputs/${PHONE}/*
 else
     echo "Build succesful"
-    mkdir out/outputs
-    mkdir out/outputs/${PHONE}
-    find out/arch/arm64/boot/dts/vendor/qcom/ -name '*.dtb' -exec cat {} + >out/outputs/${PHONE}/dtb
-    cp out/arch/arm64/boot/Image.gz-dtb out/outputs/${PHONE}/Image.gz-dtb
+    cp out/arch/arm64/boot/Image.gz-dtb out/outputs/${PHONE}/9.1.24/Image.gz-dtb
+    
+    #10.3.7
+    cp firmware/touch_fw_variant/10.3.7/* firmware/
+    Build
+    if [ $? -ne 0 ]
+    then
+        echo "Build failed"
+        rm -rf out/outputs/${PHONE}/10.3.7/*
+    else
+        echo "Build succesful"
+        cp out/arch/arm64/boot/Image.gz-dtb out/outputs/${PHONE}/10.3.7/Image.gz-dtb
+    fi
 fi
+
 
 BUILD_END=$(date +"%s")
 DIFF=$(($BUILD_END - $BUILD_START))

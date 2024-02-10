@@ -14,7 +14,7 @@ rm -rf out/outputs/*
 curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
 
 ./compile-beryllium.sh
-./compile-dipper.sh
+#./compile-dipper.sh
 
 BUILD_END=$(date +"%s")
 DIFF=$(($BUILD_END - $BUILD_START))

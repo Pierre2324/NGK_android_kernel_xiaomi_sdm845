@@ -148,3 +148,7 @@ out
 arch/arm64/boot/dts/qcom-sdm845/*
 arch/arm64/boot/dts/xiaomi/*
 techpack/mi845/*
+
+#touch fw
+firmware/novatek_nt36672_e10_hw01.fw.ihex
+firmware/novatek_nt36672_e10_hw02.fw.ihex
